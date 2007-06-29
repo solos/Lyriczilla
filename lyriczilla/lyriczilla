@@ -1,0 +1,50 @@
+#!/usr/bin/python
+
+import sys
+import urllib2
+import gettext
+from optparse import OptionParser
+from xml.dom import minidom
+from base64 import b64encode, b64decode
+from lrc2xml import lrc2xml
+
+if __name__ == "__main__":
+	
+	usage = "Usage: lyriczilla -t TITLE [-a ARTIST]"
+	parser = OptionParser(usage=usage)
+
+	parser.add_option("-t", "--title", dest="title", default="*", help="the title of the song")
+	parser.add_option("-a", "--artist", dest="artist", default="*", help="the artist of the song")
+	(options, args) = parser.parse_args()
+
+	if len(args) == 0 and options.title != '*':
+		title_encode = urllib2.quote(unicode(options.title, 'utf-8').encode('gbk'))
+		artist_encode = urllib2.quote(unicode(options.artist, 'utf-8').encode('gbk'))
+		url = 'http://www.winampcn.com/lyrictransfer/get.aspx?song=%s&artist=%s&lsong=%s&Datetime=20060601' % (title_encode, artist_encode, title_encode)
+	
+		xmltext = urllib2.urlopen(url).read()
+	
+		xmltext = xmltext.decode('gbk').encode('UTF-8')
+		xmltext = xmltext.replace('encoding="gb2312"', 'encoding="UTF-8"')
+
+		xmldoc = minidom.parseString(xmltext)
+
+		dom = minidom.getDOMImplementation().createDocument(None, 'lyrics', None)
+
+		root = xmldoc.documentElement
+		for node in root.getElementsByTagName('LyricUrl'):
+			for node in node.childNodes:
+				xx = dom.createElement('lyric')
+				xx.setAttribute('id', b64encode(node.data.encode('gbk')))
+				xx.setAttribute('title', 'title')
+				xx.setAttribute('artist', 'artist')
+				dom.documentElement.appendChild(xx)
+		print dom.toprettyxml()
+	elif len(args) == 1:
+		url = b64decode(args[0])
+		url = urllib2.quote(url, ':/')
+#		print unicode(urllib2.urlopen(url).read(), 'gbk')
+		print lrc2xml(unicode(urllib2.urlopen(url).read(), 'gbk')).encode('utf-8')
+	else:
+		print 'usage'
+
