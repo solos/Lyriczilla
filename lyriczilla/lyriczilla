@@ -12,10 +12,10 @@ def detect_charset(s):
 	charsets = ('iso-8859-1', 'gbk', 'utf-8')
 	for charset in charsets:
 		try:
-			ret = unicode(unicode(s, 'utf-8').encode(charset), 'gbk')
-			return ret
+			return unicode(unicode(s, 'utf-8').encode(charset), 'gbk')
 		except:
 			continue
+	return s
 
 if __name__ == "__main__":
 	

@@ -28,7 +28,7 @@ struct _LyricItem
 struct _LyricView
 {
 	GtkLayout layout;
-	GtkWidget *vbox;
+	GtkWidget *vbox, *message_label;
 	GList *ones;
 	GList *current;
 	gint top, y;
@@ -45,7 +45,7 @@ guint          lyricview_get_type        (void);
 GtkWidget*     lyricview_new             (void);
 
 void lyricview_set_lyric(gchar *xmltext);
-void lyricview_set_message(gchar *message);
+void lyricview_set_message(LyricView *lyricview, gchar *message);
 void lyricview_append_text(LyricView *, gint time, const gchar *text);
 void lyricview_set_current_time(LyricView *, gint time);
 void lyricview_clear(LyricView *);

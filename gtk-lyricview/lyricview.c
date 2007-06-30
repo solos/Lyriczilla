@@ -9,7 +9,6 @@ enum {
 
 static void lyricview_class_init          (LyricViewClass *klass);
 static void lyricview_init                (LyricView      *ttt);
-static void lyricview_toggle              (GtkWidget *widget, LyricView *ttt);
 
 static gint lyricview_signals[LAST_SIGNAL] = { 0 };
 
@@ -148,9 +147,10 @@ static void
 lyricview_init (LyricView *ttt)
 {
 	ttt->vbox = gtk_vbox_new (TRUE, 5);
-	gtk_widget_show (ttt->vbox);
-	gtk_layout_put (GTK_LAYOUT (ttt), ttt->vbox, 0, 66);
-
+	gtk_widget_show(ttt->vbox);
+	gtk_layout_put(GTK_LAYOUT(ttt), ttt->vbox, 0, 66);
+	ttt->message_label = gtk_label_new(NULL);
+	gtk_layout_put(GTK_LAYOUT(ttt), ttt->message_label, 0, 0);
 
 	ttt->ones = NULL;
 	ttt->current = NULL;
@@ -158,34 +158,27 @@ lyricview_init (LyricView *ttt)
 	ttt->dragging = FALSE;
 
 
-  g_signal_connect ((gpointer) ttt, "size_allocate",
-                    G_CALLBACK (on_lyricview_size_allocate),
-                    NULL);
-  g_signal_connect ((gpointer) ttt, "button_press_event",
-                    G_CALLBACK (on_lyricview_button_press_event),
-                    NULL);
-  g_signal_connect ((gpointer) ttt, "button_release_event",
-                    G_CALLBACK (on_lyricview_button_release_event),
-                    NULL);
-  g_signal_connect ((gpointer) ttt, "motion_notify_event",
-                    G_CALLBACK (on_lyricview_motion_notify_event),
-                    NULL);
+	g_signal_connect ((gpointer) ttt, "size_allocate",
+			G_CALLBACK (on_lyricview_size_allocate),
+			NULL);
+	g_signal_connect ((gpointer) ttt, "button_press_event",
+			G_CALLBACK (on_lyricview_button_press_event),
+			NULL);
+	g_signal_connect ((gpointer) ttt, "button_release_event",
+			G_CALLBACK (on_lyricview_button_release_event),
+			NULL);
+	g_signal_connect ((gpointer) ttt, "motion_notify_event",
+			G_CALLBACK (on_lyricview_motion_notify_event),
+			NULL);
 
 
 	gtk_widget_set_events (GTK_WIDGET(ttt), GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
 
 }
 
-GtkWidget*
-lyricview_new ()
+GtkWidget *lyricview_new ()
 {
-  return GTK_WIDGET ( gtk_type_new (lyricview_get_type ()));
-}
-
-static void
-lyricview_toggle (GtkWidget *widget, LyricView *ttt)
-{
-
+	return GTK_WIDGET ( gtk_type_new (lyricview_get_type ()));
 }
 
 void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
@@ -196,10 +189,16 @@ void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
 	item->label = gtk_label_new(item->text);
 	gtk_widget_show (item->label);
 	gtk_box_pack_start (GTK_BOX (lyricview->vbox), item->label, FALSE, FALSE, 0);
-
 	lyricview->ones = g_list_append(lyricview->ones, item);
+
+	gtk_widget_hide(lyricview->message_label);
+	gtk_widget_show(lyricview->vbox);
 }
 
+void lyricview_set_message(LyricView *lyricview, gchar *message)
+{
+	gtk_label_set_text(GTK_LABEL(lyricview->message_label), message);
+}
 
 void lyricview_set_current_time(LyricView *lyricview, gint time)
 {
@@ -228,14 +227,14 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 
 		lyricview->current = current;
 	}
-	
+
 	// make the current line at middle
 	if (current && !lyricview->dragging)
 	{
 		int newy = lyricview->vbox->allocation.y - GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.y;
 		newy += GTK_WIDGET(lyricview)->allocation.height / 2;
 		newy -= GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.height / 2;
-	        gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, 0, newy);
+		gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, 0, newy);
 	}
 }
 
@@ -252,4 +251,7 @@ void lyricview_clear(LyricView *lyricview)
 	}
 	g_list_free(lyricview->ones);
 	lyricview->ones = lyricview->current = NULL;
+	gtk_widget_hide(lyricview->vbox);
+	gtk_widget_show(lyricview->message_label);
 }
+

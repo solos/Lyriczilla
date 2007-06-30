@@ -100,6 +100,7 @@ gboolean gio_one_func(GIOChannel *source, GIOCondition condition, gpointer data)
 
 gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 {
+	LyricView *lyricview = (LyricView *) data;
 	gchar *str;
 	gsize length;
 	g_io_channel_read_to_end(source, &str, &length, NULL);
@@ -141,9 +142,14 @@ gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 		int pipefd;
 		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &pipefd, NULL, NULL);
 		GIOChannel *channel = g_io_channel_unix_new(pipefd);
+
+		lyricview_set_message(lyricview, "Downloading lyric...");
+
 		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_one_func, NULL);
 	
 	}
+	else
+		lyricview_set_message(lyricview, "Not found.");
 
 	return FALSE;
 }
@@ -179,6 +185,8 @@ printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
 		cfg_ptr->titlestring_preset = orig_titlestring_preset;
 		cfg_ptr->gentitle_format = orig_gentitle_format;
 
+		lyricview_set_message((LyricView *)lyricview, "Search for lyric...");
+
 		// clear the old lyric
 		lyricview_clear((LyricView *)lyricview);
 
@@ -197,7 +205,7 @@ printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
 		int pipefd;
 		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &pipefd, NULL, NULL);
 		GIOChannel *channel = g_io_channel_unix_new(pipefd);
-		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_func, NULL);
+		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_func, lyricview);
 
 	}
 
