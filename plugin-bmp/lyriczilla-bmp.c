@@ -185,7 +185,7 @@ printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
 		cfg_ptr->titlestring_preset = orig_titlestring_preset;
 		cfg_ptr->gentitle_format = orig_gentitle_format;
 
-		lyricview_set_message((LyricView *)lyricview, "Search for lyric...");
+		lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
 
 		// clear the old lyric
 		lyricview_clear((LyricView *)lyricview);

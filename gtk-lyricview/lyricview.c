@@ -53,20 +53,24 @@ lyricview_class_init (LyricViewClass *klass)
                   g_cclosure_marshal_VOID__INT, G_TYPE_NONE, 1, G_TYPE_INT);
 }
 
-
-
 void
 on_lyricview_size_allocate               (GtkWidget       *widget,
                                         GdkRectangle    *allocation,
                                         gpointer         user_data)
 {
 	LyricView *lyricview = (LyricView *) widget;
-/*	int x, y;
-	x = GTK_WIDGET(lyricview->vbox)->allocation.x;
-	y = GTK_WIDGET(lyricview->vbox)->allocation.y;
-*/
+	int x, y;
+	x = GTK_WIDGET(lyricview->message_label)->allocation.x;
+	y = GTK_WIDGET(lyricview->message_label)->allocation.y;
 	gtk_widget_set_size_request(lyricview->vbox, allocation->width, -1);
 //	FIXME: we should use gtk_layout_move() instead.
+
+	gint width, height;
+	x = GTK_WIDGET(widget)->allocation.width / 2 - GTK_WIDGET(lyricview->message_label)->allocation.width / 2;
+	y = GTK_WIDGET(widget)->allocation.height / 2 - GTK_WIDGET(lyricview->message_label)->allocation.height / 2;
+
+	GTK_WIDGET(lyricview->message_label)->allocation.x = x;
+	GTK_WIDGET(lyricview->message_label)->allocation.y = y;
 }
 
 
