@@ -10,7 +10,7 @@ uninstall:
 	rm /usr/bin/lyriczilla /usr/bin/lrc2xml.py
 
 clean:
-	rm -f *.o lyriczilla-bmp.so
+	true
 	
 rebuild:
 	make clean all

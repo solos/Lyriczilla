@@ -16,7 +16,7 @@ lyriczilla-bmp.o: lyriczilla-bmp.c
 lyriczilla-audacious.o: lyriczilla-bmp.c
 	$(CC) $(CFLAGS) -DAUDACIOUS -o $@ -c $<
 
-install:
+install: all
 	mkdir -p /usr/lib/bmp/General
 	install -s lyriczilla-bmp.so /usr/lib/bmp/General/
 	mkdir -p /usr/lib/audacious/General
