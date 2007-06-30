@@ -65,12 +65,16 @@ BmpConfig *cfg_ptr;
 
 GtkWidget *lyricwin, *lyricview;
 
+pid_t pid;
+
 gboolean gio_one_func(GIOChannel *source, GIOCondition condition, gpointer data)
 {
 	gchar *str;
 	gsize length;
 	g_io_channel_read_to_end(source, &str, &length, NULL);
 
+	kill(pid, 9);
+	pid = 0;
 	xmlDocPtr xmldoc = xmlParseMemory(str, length);
 	if (!xmldoc)
 		return FALSE;
@@ -139,8 +143,9 @@ gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 			NULL,
 		};
 
+		kill(pid, 9);
 		int pipefd;
-		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &pipefd, NULL, NULL);
+		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
 		GIOChannel *channel = g_io_channel_unix_new(pipefd);
 
 		lyricview_set_message(lyricview, "Downloading lyric...");
@@ -201,9 +206,12 @@ printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
 			NULL,
 		};
 	
-		printf("title artist: %s %s\n", title, artist);	
+		printf("title artist: %s %s\n", title, artist);
+		printf("pid: %d\n", pid);
+		if (pid)
+			kill(pid, 9);
 		int pipefd;
-		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &pipefd, NULL, NULL);
+		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
 		GIOChannel *channel = g_io_channel_unix_new(pipefd);
 		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_func, lyricview);
 
@@ -238,9 +246,6 @@ void lyric_init()
 	gtk_widget_show(lyricview);
 	gtk_widget_show(lyricwin);
 	timeout_id = g_timeout_add(100, on_timeout, 0);
-
-
-
 }
 
 void lyric_cleanup()
