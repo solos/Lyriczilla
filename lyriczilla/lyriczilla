@@ -24,6 +24,7 @@ if __name__ == "__main__":
 
 	parser.add_option("-t", "--title", dest="title", default="*", help="the title of the song")
 	parser.add_option("-a", "--artist", dest="artist", default="*", help="the artist of the song")
+	parser.add_option("-l", "--local", dest="local", default="", help="read local LRC file")
 	(options, args) = parser.parse_args()
 
 	if len(args) == 0 and options.title != '*':
@@ -54,6 +55,10 @@ if __name__ == "__main__":
 		url = urllib2.quote(url, ':/')
 #		print unicode(urllib2.urlopen(url).read(), 'gbk')
 		print lrc2xml(unicode(urllib2.urlopen(url).read(), 'gbk')).encode('utf-8')
+	elif options.local != '':
+		f = open(options.local, 'r')
+		s = unicode(f.read(), 'gbk')
+		print lrc2xml(s).encode('utf-8')
 	else:
 		print 'usage'
 

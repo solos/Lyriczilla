@@ -230,7 +230,7 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 	if (previous != current)
 	{
 		GdkColor color;
-		gdk_color_parse("white", &color);
+		gdk_color_parse("green", &color);
 		gtk_widget_modify_fg(((LyricItem *)current->data)->label, GTK_STATE_NORMAL, &color);
 
 		if (previous)

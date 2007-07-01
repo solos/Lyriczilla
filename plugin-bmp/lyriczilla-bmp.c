@@ -4,6 +4,7 @@
 #include <glib.h>
 #include <libxml/xmlreader.h>
 #include <dlfcn.h>
+#include <string.h>
 
 #include "../gtk-lyricview/lyricview.h"
 
@@ -65,7 +66,7 @@ BmpConfig *cfg_ptr;
 
 GtkWidget *lyricwin, *lyricview;
 
-pid_t pid;
+pid_t pid = 0;
 
 gboolean gio_one_func(GIOChannel *source, GIOCondition condition, gpointer data)
 {
@@ -77,7 +78,10 @@ gboolean gio_one_func(GIOChannel *source, GIOCondition condition, gpointer data)
 	pid = 0;
 	xmlDocPtr xmldoc = xmlParseMemory(str, length);
 	if (!xmldoc)
+	{
+		printf("Error while parsing lyric.\n");
 		return FALSE;
+	}
 	xmlNodePtr song = xmldoc->children;
 	char *id = NULL;
 	while (song)
@@ -112,7 +116,10 @@ gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 	xmlDocPtr xmldoc = xmlParseMemory(str, length);
 	
 	if (!xmldoc)
+	{
+		printf("Error while searching.\n");
 		return FALSE;
+	}
 	xmlNodePtr lyrics = xmldoc->children;
 	char *id = NULL;
 	while (lyrics)
@@ -142,8 +149,8 @@ gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 			id,
 			NULL,
 		};
-
 		kill(pid, 9);
+		pid = 0;
 		int pipefd;
 		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
 		GIOChannel *channel = g_io_channel_unix_new(pipefd);
@@ -159,7 +166,44 @@ gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 	return FALSE;
 }
 
+gboolean load_local_lrc(const gchar *filename)
+{
+	size_t pos = strlen((const char *) filename);
 
+	while (pos > 0 && filename[pos] != '.')
+		pos--;
+
+	gchar *file = g_strndup(filename, pos);
+	gchar *lrc_filename = g_strconcat(file, ".lrc", NULL);
+	g_free(file);
+
+	if (!g_file_test(lrc_filename, G_FILE_TEST_IS_REGULAR))
+		return FALSE;
+
+	lyricview_clear((LyricView *)lyricview);
+	gchar *argv[4] =
+	{
+		"lyriczilla",
+		"-l",
+		lrc_filename,
+		NULL,
+	};
+
+	if (pid)
+	{
+		kill(pid, 9);
+		pid = 0;
+	}
+	int pipefd;
+	g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
+	GIOChannel *channel = g_io_channel_unix_new(pipefd);
+	lyricview_set_message((LyricView *) lyricview, "Loading local lyric...");
+	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_one_func, NULL);
+
+
+	return TRUE;
+
+}
 
 gboolean on_timeout(gpointer data)
 {
@@ -173,47 +217,52 @@ gboolean on_timeout(gpointer data)
 		g_free(last_filename);
 		last_filename = filename;
 
-		gint orig_titlestring_preset = cfg_ptr->titlestring_preset;
-		gchar *orig_gentitle_format = cfg_ptr->gentitle_format;
-		cfg_ptr->titlestring_preset = 1000; // last one
-		char *title, *artist;
-		int len_real;
-
-printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
-
-		cfg_ptr->gentitle_format = "%t";
-		_input_get_song_info(filename, &title, &len_real);
-		cfg_ptr->gentitle_format = "%p";
-		_input_get_song_info(filename, &artist, &len_real);
-
-		// restore them back
-		cfg_ptr->titlestring_preset = orig_titlestring_preset;
-		cfg_ptr->gentitle_format = orig_gentitle_format;
-
-		lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
-
-		// clear the old lyric
-		lyricview_clear((LyricView *)lyricview);
-
-		// we should load the lyric.
-		gchar *argv[6] =
+		if (!load_local_lrc(filename))
 		{
-			"lyriczilla",
-			"-t",
-			title,
-			"-a",
-			artist,
-			NULL,
-		};
-	
-		printf("title artist: %s %s\n", title, artist);
-		if (pid)
-			kill(pid, 9);
-		int pipefd;
-		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
-		GIOChannel *channel = g_io_channel_unix_new(pipefd);
-		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_func, lyricview);
+			gint orig_titlestring_preset = cfg_ptr->titlestring_preset;
+			gchar *orig_gentitle_format = cfg_ptr->gentitle_format;
+			cfg_ptr->titlestring_preset = 1000; // last one
+			char *title, *artist;
+			int len_real;
 
+			printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
+
+			cfg_ptr->gentitle_format = "%t";
+			_input_get_song_info(filename, &title, &len_real);
+			cfg_ptr->gentitle_format = "%p";
+			_input_get_song_info(filename, &artist, &len_real);
+
+			// restore them back
+			cfg_ptr->titlestring_preset = orig_titlestring_preset;
+			cfg_ptr->gentitle_format = orig_gentitle_format;
+
+			lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
+
+			// clear the old lyric
+			lyricview_clear((LyricView *)lyricview);
+
+			// we should load the lyric.
+			gchar *argv[6] =
+			{
+				"lyriczilla",
+				"-t",
+				title,
+				"-a",
+				artist,
+				NULL,
+			};
+
+			printf("title artist: %s %s\n", title, artist);
+			if (pid)
+			{
+				kill(pid, 9);
+				pid = 0;
+			}
+			int pipefd;
+			g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
+			GIOChannel *channel = g_io_channel_unix_new(pipefd);
+			g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_func, lyricview);
+		}
 	}
 
 	gint time = xmms_remote_get_output_time(session);
@@ -245,6 +294,13 @@ void lyric_init()
 
 	gtk_container_add (GTK_CONTAINER(lyricwin), lyricview);
 	gtk_widget_modify_bg(lyricview, GTK_STATE_NORMAL, &black);
+/*
+	GtkWidget **mainwin_ptr = dlsym(handle, "mainwin");
+	printf("mainwin: %s\n", gtk_window_get_title(GTK_WINDOW(*mainwin_ptr)));
+	gtk_window_set_transient_for(GTK_WINDOW(lyricwin), GTK_WINDOW(*mainwin_ptr));
+
+	gtk_window_set_skip_taskbar_hint(GTK_WINDOW(lyricwin), TRUE);
+*/
 	gtk_widget_show(lyricview);
 	gtk_widget_show(lyricwin);
 	timeout_id = g_timeout_add(50, on_timeout, 0);
