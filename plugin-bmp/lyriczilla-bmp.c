@@ -294,13 +294,15 @@ void lyric_init()
 
 	gtk_container_add (GTK_CONTAINER(lyricwin), lyricview);
 	gtk_widget_modify_bg(lyricview, GTK_STATE_NORMAL, &black);
-/*
+
 	GtkWidget **mainwin_ptr = dlsym(handle, "mainwin");
 	printf("mainwin: %s\n", gtk_window_get_title(GTK_WINDOW(*mainwin_ptr)));
-	gtk_window_set_transient_for(GTK_WINDOW(lyricwin), GTK_WINDOW(*mainwin_ptr));
+/*	gtk_window_set_transient_for(GTK_WINDOW(lyricwin), GTK_WINDOW(*mainwin_ptr));
 
 	gtk_window_set_skip_taskbar_hint(GTK_WINDOW(lyricwin), TRUE);
 */
+       g_signal_connect (G_OBJECT (*mainwin_ptr), "hide", G_CALLBACK(lyric_cleanup), NULL);
+
 	gtk_widget_show(lyricview);
 	gtk_widget_show(lyricwin);
 	timeout_id = g_timeout_add(50, on_timeout, 0);

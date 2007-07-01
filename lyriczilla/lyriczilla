@@ -28,8 +28,8 @@ if __name__ == "__main__":
 	(options, args) = parser.parse_args()
 
 	if len(args) == 0 and options.title != '*':
-		title_encode = urllib2.quote(detect_charset(options.title).encode('gbk'))
-		artist_encode = urllib2.quote(detect_charset(options.artist).encode('gbk'))
+		title_encode = urllib2.quote(detect_charset(options.title).encode('gbk').replace(' ', ''))
+		artist_encode = urllib2.quote(detect_charset(options.artist).encode('gbk').replace(' ',''))
 		url = 'http://www.winampcn.com/lyrictransfer/get.aspx?song=%s&artist=%s&lsong=%s&Datetime=20060601' % (title_encode, artist_encode, title_encode)
 	
 		xmltext = urllib2.urlopen(url).read()
