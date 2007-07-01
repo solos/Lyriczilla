@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=`pkg-config --cflags gtk+-2.0 bmp libxml-2.0`
+CFLAGS=-O2 `pkg-config --cflags gtk+-2.0 bmp libxml-2.0`
 LDFLAGS=-shared `pkg-config --libs gtk+-2.0 libxml-2.0`
 
 all:	lyriczilla-bmp.so lyriczilla-audacious.so
@@ -18,9 +18,9 @@ lyriczilla-audacious.o: lyriczilla-bmp.c
 
 install: all
 	mkdir -p /usr/lib/bmp/General
-	install -s lyriczilla-bmp.so /usr/lib/bmp/General/
+	install -s -m 644 lyriczilla-bmp.so /usr/lib/bmp/General/
 	mkdir -p /usr/lib/audacious/General
-	install -s lyriczilla-audacious.so /usr/lib/audacious/General/
+	install -s -m 644 lyriczilla-audacious.so /usr/lib/audacious/General/
 
 uninstall:
 	rm /usr/lib/bmp/General/lyriczilla-bmp.so
