@@ -207,7 +207,6 @@ printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
 		};
 	
 		printf("title artist: %s %s\n", title, artist);
-		printf("pid: %d\n", pid);
 		if (pid)
 			kill(pid, 9);
 		int pipefd;
@@ -240,12 +239,15 @@ void lyric_init()
 	gtk_window_set_title((GtkWindow *) lyricwin, "LyricZilla");
 	gtk_widget_realize(lyricwin);
 	lyricview = lyricview_new();
-	g_signal_connect (G_OBJECT (lyricview), "time_change",
-		    G_CALLBACK (win), NULL);
+	g_signal_connect (G_OBJECT (lyricview), "time_change", G_CALLBACK (win), NULL);
+	GdkColor black;
+	gdk_color_parse("black",&black);
+
 	gtk_container_add (GTK_CONTAINER(lyricwin), lyricview);
+	gtk_widget_modify_bg(lyricview, GTK_STATE_NORMAL, &black);
 	gtk_widget_show(lyricview);
 	gtk_widget_show(lyricwin);
-	timeout_id = g_timeout_add(100, on_timeout, 0);
+	timeout_id = g_timeout_add(50, on_timeout, 0);
 }
 
 void lyric_cleanup()

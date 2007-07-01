@@ -154,11 +154,15 @@ lyricview_init (LyricView *ttt)
 	gtk_widget_show(ttt->vbox);
 	gtk_layout_put(GTK_LAYOUT(ttt), ttt->vbox, 0, 66);
 	ttt->message_label = gtk_label_new(NULL);
+	GdkColor color;
+	gdk_color_parse("red", &color);
+	gtk_widget_modify_fg(ttt->message_label, GTK_STATE_NORMAL, &color);
+
 	gtk_layout_put(GTK_LAYOUT(ttt), ttt->message_label, 0, 0);
 
 	ttt->ones = NULL;
 	ttt->current = NULL;
-	
+
 	ttt->dragging = FALSE;
 
 
@@ -191,6 +195,10 @@ void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
 	item->time = time;
 	item->text = g_strdup(text);
 	item->label = gtk_label_new(item->text);
+	GdkColor color;
+	gdk_color_parse("darkblue", &color);
+	gtk_widget_modify_fg(item->label, GTK_STATE_NORMAL, &color);
+
 	gtk_widget_show (item->label);
 	gtk_box_pack_start (GTK_BOX (lyricview->vbox), item->label, FALSE, FALSE, 0);
 	lyricview->ones = g_list_append(lyricview->ones, item);
@@ -221,13 +229,16 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 
 	if (previous != current)
 	{
-		char *markup;
-		markup = g_markup_printf_escaped ("<span foreground=\"red\">%s</span>", ((LyricItem *)current->data)->text);
-		gtk_label_set_markup (GTK_LABEL(((LyricItem *)current->data)->label), markup);
-		g_free (markup);
+		GdkColor color;
+		gdk_color_parse("white", &color);
+		gtk_widget_modify_fg(((LyricItem *)current->data)->label, GTK_STATE_NORMAL, &color);
 
 		if (previous)
-			gtk_label_set_text(GTK_LABEL(((LyricItem *)previous->data)->label), ((LyricItem *)previous->data)->text);
+		{
+			GdkColor color;
+			gdk_color_parse("darkblue", &color);
+			gtk_widget_modify_fg(((LyricItem *)previous->data)->label, GTK_STATE_NORMAL, &color);
+		}
 
 		lyricview->current = current;
 	}
