@@ -1,10 +1,10 @@
 Package: lyriczilla-plugin-bmp
-Version: 0.0.2
+Version: 0.0.3
 Section: universe/sound
 Priority: optional
 Architecture: i386
 Essential: no
-Depends: lyriczilla (= 0.0.2), beep-media-player (>= 0.9.7.1), libxml2
+Depends: lyriczilla (= 0.0.3), beep-media-player (>= 0.9.7.1), libxml2
 Installed-Size: 32
 Maintainer: Liu Qishuai <lqs.buaa@gmail.com>
 Description: LyricZilla plugin for Beep Media Player
