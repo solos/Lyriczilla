@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "../gtk-lyricview/lyricview.h"
-
+#include "../version.h"
 /*
 
    gpointer handle;
@@ -337,7 +337,7 @@ void lyric_about()
 			"name", "LyricZilla",
 //			"copyright", copyright,
 			"comments", "Lyric",
-			"version", "0.0.3",//VERSION,
+			"version", VERSION,
 			"authors", authors,
 			"license", license_text,
 			"wrap-license", TRUE,

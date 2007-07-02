@@ -1,5 +1,5 @@
 Package: lyriczilla
-Version: 0.0.3
+Version: __VERSION__
 Section: universe/sound
 Priority: optional
 Architecture: all

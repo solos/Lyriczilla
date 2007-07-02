@@ -1,10 +1,10 @@
 Package: lyriczilla-plugin-audacious
-Version: 0.0.3
+Version: __VERSION__
 Section: universe/sound
 Priority: optional
 Architecture: i386
 Essential: no
-Depends: lyriczilla (= 0.0.3), audacious (>= 1.2.2), libxml2
+Depends: lyriczilla (= __VERSION__), audacious (>= 1.2.2), libxml2
 Installed-Size: 32
 Maintainer: Liu Qishuai <lqs.buaa@gmail.com>
 Description: LyricZilla plugin for Audacious
