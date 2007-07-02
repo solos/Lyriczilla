@@ -21,6 +21,8 @@
 
 */
 
+#define _
+
 #ifdef AUDACIOUS
 	#define BMPCONFIG_OFFSET 364
 #endif
@@ -40,6 +42,7 @@ struct _BmpConfig {
 
 
 void lyric_init();
+void lyric_about();
 void lyric_cleanup();
 
 gint timeout_id;
@@ -51,7 +54,7 @@ GeneralPlugin lyric_gp =
 	0,
 	"LyricZilla",
 	lyric_init,
-	NULL,
+	lyric_about,
 	NULL,
 	lyric_cleanup,
 };
@@ -65,10 +68,10 @@ static void (*_input_get_song_info) (char *filename, char **title_real, int *len
 BmpConfig *cfg_ptr;
 
 GtkWidget *lyricwin, *lyricview;
-
+#define LYRIC_VIEW(widget) ((LyricView *) (widget))
 pid_t pid = 0;
 
-gboolean gio_one_func(GIOChannel *source, GIOCondition condition, gpointer data)
+gboolean on_stage_2_data(GIOChannel *source, GIOCondition condition, gpointer data)
 {
 	gchar *str;
 	gsize length;
@@ -79,7 +82,7 @@ gboolean gio_one_func(GIOChannel *source, GIOCondition condition, gpointer data)
 	xmlDocPtr xmldoc = xmlParseMemory(str, length);
 	if (!xmldoc)
 	{
-		printf("Error while parsing lyric.\n");
+		lyricview_set_message(LYRIC_VIEW(lyricview), "Error while parsing lyric.");
 		return FALSE;
 	}
 	xmlNodePtr song = xmldoc->children;
@@ -104,9 +107,7 @@ gboolean gio_one_func(GIOChannel *source, GIOCondition condition, gpointer data)
 	return FALSE;
 }
 
-
-
-gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
+gboolean on_stage_1_data(GIOChannel *source, GIOCondition condition, gpointer data)
 {
 	LyricView *lyricview = (LyricView *) data;
 	gchar *str;
@@ -117,7 +118,7 @@ gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 	
 	if (!xmldoc)
 	{
-		printf("Error while searching.\n");
+		lyricview_set_message(LYRIC_VIEW(lyricview), "Error while searching.");
 		return FALSE;
 	}
 	xmlNodePtr lyrics = xmldoc->children;
@@ -157,7 +158,7 @@ gboolean gio_func(GIOChannel *source, GIOCondition condition, gpointer data)
 
 		lyricview_set_message(lyricview, "Downloading lyric...");
 
-		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_one_func, NULL);
+		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_2_data, NULL);
 	
 	}
 	else
@@ -198,19 +199,20 @@ gboolean load_local_lrc(const gchar *filename)
 	g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
 	GIOChannel *channel = g_io_channel_unix_new(pipefd);
 	lyricview_set_message((LyricView *) lyricview, "Loading local lyric...");
-	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_one_func, NULL);
+	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_2_data, NULL);
 
 
 	return TRUE;
 
 }
 
+gchar *last_filename = NULL;
+
 gboolean on_timeout(gpointer data)
 {
 	gint session = lyric_gp.xmms_session;
 	gint playlist_pos = xmms_remote_get_playlist_pos(session);
 	gchar *filename = (gchar *)xmms_remote_get_playlist_file(session, playlist_pos);
-	static gchar *last_filename = NULL;
 
 	if (!last_filename || !filename || strcmp(last_filename, filename)) // currently playing another song.
 	{
@@ -261,7 +263,7 @@ gboolean on_timeout(gpointer data)
 			int pipefd;
 			g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
 			GIOChannel *channel = g_io_channel_unix_new(pipefd);
-			g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, gio_func, lyricview);
+			g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_1_data, lyricview);
 		}
 	}
 
@@ -289,11 +291,14 @@ void lyric_init()
 	gtk_widget_realize(lyricwin);
 	lyricview = lyricview_new();
 	g_signal_connect (G_OBJECT (lyricview), "time_change", G_CALLBACK (win), NULL);
-	GdkColor black;
-	gdk_color_parse("black",&black);
-
+	
+	// make default colors
+	gdk_color_parse("black", &LYRIC_VIEW(lyricview)->colors.background);
+	gdk_color_parse("darkblue", &LYRIC_VIEW(lyricview)->colors.normal);
+	gdk_color_parse("green", &LYRIC_VIEW(lyricview)->colors.current);
+	
 	gtk_container_add (GTK_CONTAINER(lyricwin), lyricview);
-	gtk_widget_modify_bg(lyricview, GTK_STATE_NORMAL, &black);
+	gtk_widget_modify_bg(lyricview, GTK_STATE_NORMAL, &LYRIC_VIEW(lyricview)->colors.background);
 
 	GtkWidget **mainwin_ptr = dlsym(handle, "mainwin");
 	printf("mainwin: %s\n", gtk_window_get_title(GTK_WINDOW(*mainwin_ptr)));
@@ -308,9 +313,45 @@ void lyric_init()
 	timeout_id = g_timeout_add(50, on_timeout, 0);
 }
 
+void lyric_about()
+{
+	const char *copyright =	"Copyright \xc2\xa9 2007 Liu Qishuai";
+	const char *authors[] = {"Liu Qishuai <lqs.buaa@gmail.com>", "Yuki Lee <ykstars@gmail.com>", NULL};
+	const gchar *license[] = {
+		"LyricZilla is free software; you can redistribute it and/or modify "
+			"it under the terms of the GNU General Public License as published by "
+			"the Free Software Foundation; either version 2 of the License, or "
+			"(at your option) any later version.",
+		"LyricZilla is distributed in the hope that it will be useful, "
+			"but WITHOUT ANY WARRANTY; without even the implied warranty of "
+			"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the "
+			"GNU General Public License for more details.",
+		"You should have received a copy of the GNU General Public License "
+			"along with LyricZilla; if not, write to the Free Software Foundation, Inc., "
+			"51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA"
+	};
+	gchar *license_text = g_strjoin ("\n\n",
+			_(license[0]), _(license[1]), _(license[2]), NULL);
+
+	gtk_show_about_dialog (NULL,
+			"name", "LyricZilla",
+//			"copyright", copyright,
+			"comments", "Lyric",
+			"version", "0.0.3",//VERSION,
+			"authors", authors,
+			"license", license_text,
+			"wrap-license", TRUE,
+			"translator-credits", _("translator-credits"),
+			"logo-icon-name", "lyriczilla",
+			NULL);
+	g_free(license_text);
+}
+
 void lyric_cleanup()
 {
 	g_source_remove(timeout_id);
+	g_free(last_filename);
+	last_filename = NULL;
 	gtk_widget_destroy(lyricwin);
 }
 

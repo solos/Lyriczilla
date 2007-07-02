@@ -189,15 +189,35 @@ GtkWidget *lyricview_new ()
 	return GTK_WIDGET ( gtk_type_new (lyricview_get_type ()));
 }
 
+inline gint number_between(gint from, gint to, gdouble rate)
+{
+	return from + rate * (to - from);
+}
+
+void color_between(GdkColor *from, GdkColor *to, gdouble rate, GdkColor *result)
+{
+/*
+
+  rate=0          rate=0.5    0.75   rate=1
+   from              |        ｜          to 
+    |                |        ｜          |
+    ------------------------------------
+*/
+
+// 4             1, 0.75
+	result->pixel = number_between(from->pixel, to->pixel, rate);
+	result->red = number_between(from->red, to->red, rate);
+	result->green = number_between(from->green, to->green, rate);
+	result->blue = number_between(from->blue, to->blue, rate);
+}
+
 void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
 {
 	LyricItem *item = g_new(LyricItem, 1);
 	item->time = time;
 	item->text = g_strdup(text);
 	item->label = gtk_label_new(item->text);
-	GdkColor color;
-	gdk_color_parse("darkblue", &color);
-	gtk_widget_modify_fg(item->label, GTK_STATE_NORMAL, &color);
+	gtk_widget_modify_fg(item->label, GTK_STATE_NORMAL, &lyricview->colors.normal);
 
 	gtk_widget_show (item->label);
 	gtk_box_pack_start (GTK_BOX (lyricview->vbox), item->label, FALSE, FALSE, 0);
@@ -210,11 +230,15 @@ void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
 void lyricview_set_message(LyricView *lyricview, gchar *message)
 {
 	gtk_label_set_text(GTK_LABEL(lyricview->message_label), message);
+	gtk_widget_queue_draw(GTK_WIDGET(lyricview));
 }
 
 void lyricview_set_current_time(LyricView *lyricview, gint time)
 {
 	GList *list = lyricview->ones;
+
+
+
 
 	GList *previous = lyricview->current;
 	GList *current = lyricview->current;
@@ -228,21 +252,37 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 		current = current->prev;
 
 	if (previous != current)
-	{
-		GdkColor color;
-		gdk_color_parse("green", &color);
-		gtk_widget_modify_fg(((LyricItem *)current->data)->label, GTK_STATE_NORMAL, &color);
-
-		if (previous)
-		{
-			GdkColor color;
-			gdk_color_parse("darkblue", &color);
-			gtk_widget_modify_fg(((LyricItem *)previous->data)->label, GTK_STATE_NORMAL, &color);
-		}
-
 		lyricview->current = current;
-	}
 
+	// set colors
+	int threshold = 300;
+	GList *p;
+	for (p = list; p; p = p->next)
+	{
+		gint p_time = ((LyricItem *)(p->data))->time;
+		gint pn_time = p->next ? ((LyricItem *)(p->next->data))->time : 0;
+		
+		if (time < p_time - threshold || p->next && pn_time + threshold < time)
+			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &lyricview->colors.normal);		
+		else if (time < p_time + threshold)
+		{
+			int delta = (time - p_time + threshold) / 2;
+			GdkColor color;
+			color_between(&lyricview->colors.normal, &lyricview->colors.current, (gdouble) delta / threshold, &color);
+			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &color);
+			
+		}
+		else if (p->next && time < pn_time - threshold)
+			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &lyricview->colors.current);
+		else if (p->next && time < pn_time + threshold)
+		{
+			int delta = (pn_time + threshold - time) / 2;
+			GdkColor color;
+			color_between(&lyricview->colors.normal, &lyricview->colors.current, (gdouble) delta / threshold, &color);
+			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &color);
+		}
+	}
+	
 	// make the current line at middle
 	if (current && !lyricview->dragging)
 	{

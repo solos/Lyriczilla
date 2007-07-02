@@ -13,7 +13,7 @@ extern "C" {
 
 typedef struct _LyricView       LyricView;
 typedef struct _LyricViewClass  LyricViewClass;
-
+typedef struct _LyricViewColors LyricViewColors;
 
 typedef struct _LyricItem 	LyricItem;
 
@@ -24,6 +24,15 @@ struct _LyricItem
 	GtkWidget *label;
 };
 
+struct _LyricViewColors
+{
+	GdkColor background;
+	GdkColor normal;
+	GdkColor current;
+	GdkColor drag;
+	GdkColor messages;
+	GdkColor errors;
+};
 
 struct _LyricView
 {
@@ -33,6 +42,7 @@ struct _LyricView
 	GList *current;
 	gint top, y;
 	gboolean dragging;
+	LyricViewColors colors;
 };
 
 struct _LyricViewClass

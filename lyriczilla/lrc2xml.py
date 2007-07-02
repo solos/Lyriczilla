@@ -57,6 +57,8 @@ def lrc2xml(lrc):
 					else:
 						time+=int(value[j][0])*60*1000
 						time+=int(value[j][1])*1000
+					if time < 0:
+						time = 0;
 					arrays.append((time,ly))
 
 						
