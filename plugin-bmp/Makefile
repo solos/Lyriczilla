@@ -3,16 +3,14 @@ CFLAGS=-O2 -DAUDACIOUS `pkg-config --cflags gtk+-2.0 libxml-2.0`
 CFLAGS_A=-O2 -DAUDACIOUS `pkg-config --cflags gtk+-2.0 audacious libxml-2.0`
 CFLAGS_B=-O2 -DBEEP_MEDIA_PLAYER `pkg-config --cflags gtk+-2.0 bmp libxml-2.0`
 LDFLAGS=-shared `pkg-config --libs gtk+-2.0 libxml-2.0`
-LDFLAGS_A=-shared `pkg-config --libs gtk+-2.0 audacious libxml-2.0`
-LDFLAGS_B=-shared `pkg-config --libs gtk+-2.0 bmp libxml-2.0`
 
 all:	lyriczilla-bmp.so lyriczilla-audacious.so
 
 lyriczilla-bmp.so: ../gtk-lyricview/lyricview.o lyriczilla-bmp.o
-	$(CC) $(LDFLAGS_B) -o $@  $^
+	$(CC) $(LDFLAGS) -o $@  $^
 
 lyriczilla-audacious.so: ../gtk-lyricview/lyricview.o lyriczilla-audacious.o
-	$(CC) $(LDFLAGS_A) -o $@  $^
+	$(CC) $(LDFLAGS) -o $@  $^
 
 lyriczilla-bmp.o: lyriczilla-bmp.c
 	$(CC) $(CFLAGS_B) -o $@ -c $<

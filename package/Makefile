@@ -30,9 +30,17 @@ deb-lyriczilla-plugin-audacious:	../plugin-bmp
 	dpkg -b target lyriczilla-plugin-audacious-$(VERSION)-i386.deb
 	rm -rf target
 
+Packages.gz:	deb
+	dpkg-scanpackages . /dev/null |gzip >Packages.gz
+
 clean:
 	rm -rf *.deb target
 	
 rebuild:
 	make clean all
+
+upload: deb
+	./googlecode-upload.py -s "lyriczilla $(VERSION) core package" -p lyriczilla -u lqs.buaa lyriczilla-$(VERSION)-all.deb
+	./googlecode-upload.py -s "lyriczilla $(VERSION) plugin for beep-media-player i386" -p lyriczilla -u lqs.buaa lyriczilla-plugin-bmp-$(VERSION)-i386.deb
+	./googlecode-upload.py -s "lyriczilla $(VERSION) plugin for audacious i386" -p lyriczilla -u lqs.buaa lyriczilla-plugin-audacious-$(VERSION)-i386.deb
 
