@@ -211,65 +211,67 @@ gchar *last_filename = NULL;
 gboolean on_timeout(gpointer data)
 {
 	gint session = lyric_gp.xmms_session;
-	gint playlist_pos = xmms_remote_get_playlist_pos(session);
-	gchar *filename = (gchar *)xmms_remote_get_playlist_file(session, playlist_pos);
-
-	if (!last_filename || !filename || strcmp(last_filename, filename)) // currently playing another song.
+	if (xmms_remote_get_playlist_length(session))
 	{
-		g_free(last_filename);
-		last_filename = filename;
-
-		if (!load_local_lrc(filename))
+		gint playlist_pos = xmms_remote_get_playlist_pos(session);
+		gchar *filename = (gchar *)xmms_remote_get_playlist_file(session, playlist_pos);
+		printf("%s\n", filename);
+		if (!last_filename || !filename || strcmp(last_filename, filename)) // currently playing another song.
 		{
-			gint orig_titlestring_preset = cfg_ptr->titlestring_preset;
-			gchar *orig_gentitle_format = cfg_ptr->gentitle_format;
-			cfg_ptr->titlestring_preset = 1000; // last one
-			char *title, *artist;
-			int len_real;
+			g_free(last_filename);
+			last_filename = filename;
 
-			printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
-
-			cfg_ptr->gentitle_format = "%t";
-			_input_get_song_info(filename, &title, &len_real);
-			cfg_ptr->gentitle_format = "%p";
-			_input_get_song_info(filename, &artist, &len_real);
-
-			// restore them back
-			cfg_ptr->titlestring_preset = orig_titlestring_preset;
-			cfg_ptr->gentitle_format = orig_gentitle_format;
-
-			lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
-
-			// clear the old lyric
-			lyricview_clear((LyricView *)lyricview);
-
-			// we should load the lyric.
-			gchar *argv[6] =
+			if (!load_local_lrc(filename))
 			{
-				"lyriczilla",
-				"-t",
-				title,
-				"-a",
-				artist,
-				NULL,
-			};
+				gint orig_titlestring_preset = cfg_ptr->titlestring_preset;
+				gchar *orig_gentitle_format = cfg_ptr->gentitle_format;
+				cfg_ptr->titlestring_preset = 1000; // last one
+				char *title, *artist;
+				int len_real;
 
-			printf("title artist: %s %s\n", title, artist);
-			if (pid)
-			{
-				kill(pid, 9);
-				pid = 0;
+				printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
+
+				cfg_ptr->gentitle_format = "%t";
+				_input_get_song_info(filename, &title, &len_real);
+				cfg_ptr->gentitle_format = "%p";
+				_input_get_song_info(filename, &artist, &len_real);
+
+				// restore them back
+				cfg_ptr->titlestring_preset = orig_titlestring_preset;
+				cfg_ptr->gentitle_format = orig_gentitle_format;
+
+				lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
+
+				// clear the old lyric
+				lyricview_clear((LyricView *)lyricview);
+
+				// we should load the lyric.
+				gchar *argv[6] =
+				{
+					"lyriczilla",
+					"-t",
+					title,
+					"-a",
+					artist,
+					NULL,
+				};
+
+				printf("title artist: %s %s\n", title, artist);
+				if (pid)
+				{
+					kill(pid, 9);
+					pid = 0;
+				}
+				int pipefd;
+				g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
+				GIOChannel *channel = g_io_channel_unix_new(pipefd);
+				g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_1_data, lyricview);
 			}
-			int pipefd;
-			g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
-			GIOChannel *channel = g_io_channel_unix_new(pipefd);
-			g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_1_data, lyricview);
 		}
+
+		gint time = xmms_remote_get_output_time(session);
+		lyricview_set_current_time((LyricView *)lyricview, time);
 	}
-
-	gint time = xmms_remote_get_output_time(session);
-	lyricview_set_current_time((LyricView *)lyricview, time);
-
 	return TRUE;
 }
 
@@ -291,22 +293,22 @@ void lyric_init()
 	gtk_widget_realize(lyricwin);
 	lyricview = lyricview_new();
 	g_signal_connect (G_OBJECT (lyricview), "time_change", G_CALLBACK (win), NULL);
-	
+
 	// make default colors
 	gdk_color_parse("black", &LYRIC_VIEW(lyricview)->colors.background);
 	gdk_color_parse("darkblue", &LYRIC_VIEW(lyricview)->colors.normal);
 	gdk_color_parse("green", &LYRIC_VIEW(lyricview)->colors.current);
-	
+
 	gtk_container_add (GTK_CONTAINER(lyricwin), lyricview);
 	gtk_widget_modify_bg(lyricview, GTK_STATE_NORMAL, &LYRIC_VIEW(lyricview)->colors.background);
 
 	GtkWidget **mainwin_ptr = dlsym(handle, "mainwin");
 	printf("mainwin: %s\n", gtk_window_get_title(GTK_WINDOW(*mainwin_ptr)));
-/*	gtk_window_set_transient_for(GTK_WINDOW(lyricwin), GTK_WINDOW(*mainwin_ptr));
+	/*	gtk_window_set_transient_for(GTK_WINDOW(lyricwin), GTK_WINDOW(*mainwin_ptr));
 
-	gtk_window_set_skip_taskbar_hint(GTK_WINDOW(lyricwin), TRUE);
-*/
-       g_signal_connect (G_OBJECT (*mainwin_ptr), "hide", G_CALLBACK(lyric_cleanup), NULL);
+		gtk_window_set_skip_taskbar_hint(GTK_WINDOW(lyricwin), TRUE);
+		*/
+	g_signal_connect (G_OBJECT (*mainwin_ptr), "hide", G_CALLBACK(lyric_cleanup), NULL);
 
 	gtk_widget_show(lyricview);
 	gtk_widget_show(lyricwin);
@@ -335,7 +337,7 @@ void lyric_about()
 
 	gtk_show_about_dialog (NULL,
 			"name", "LyricZilla",
-//			"copyright", copyright,
+			//			"copyright", copyright,
 			"comments", "Lyric",
 			"version", VERSION,
 			"authors", authors,
