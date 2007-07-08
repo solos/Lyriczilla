@@ -48,7 +48,9 @@ def lrc2xml(lrc):
 					offset = long(namev)
 					continue
 				if name=='la':
-					continue			
+					continue
+				if name=='encoding':
+					continue
 				for j in range(len(value)):
 					time=offset #offset using here
 					if value[j][1].find(".")!=-1:
