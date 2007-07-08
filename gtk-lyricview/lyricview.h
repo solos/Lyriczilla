@@ -7,7 +7,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define LYRICVIEW(obj)          GTK_CHECK_CAST (obj, lyricview_get_type (), LyricView)
+#define LYRIC_VIEW(obj)          GTK_CHECK_CAST (obj, lyricview_get_type (), LyricView)
 #define LYRICVIEW_CLASS(klass)  GTK_CHECK_CLASS_CAST (klass, lyricview_get_type (), LyricViewClass)
 #define IS_LYRICVIEW(obj)       GTK_CHECK_TYPE (obj, lyricview_get_type ())
 
@@ -40,9 +40,10 @@ struct _LyricView
 	GtkWidget *vbox, *message_label;
 	GList *ones;
 	GList *current;
-	gint top, y;
+	gint top, left, x, y;
 	gboolean dragging;
 	LyricViewColors colors;
+	gboolean horizontal;
 };
 
 struct _LyricViewClass

@@ -62,8 +62,11 @@ on_lyricview_size_allocate               (GtkWidget       *widget,
 	int x, y;
 	x = GTK_WIDGET(lyricview->message_label)->allocation.x;
 	y = GTK_WIDGET(lyricview->message_label)->allocation.y;
-	gtk_widget_set_size_request(lyricview->vbox, allocation->width, -1);
-//	FIXME: we should use gtk_layout_move() instead.
+	if (lyricview->horizontal)
+		gtk_widget_set_size_request(lyricview->vbox, -1, allocation->height);
+	else
+		gtk_widget_set_size_request(lyricview->vbox, allocation->width, -1);
+	//	FIXME: we should use gtk_layout_move() instead.
 
 	gint width, height;
 	x = GTK_WIDGET(widget)->allocation.width / 2 - GTK_WIDGET(lyricview->message_label)->allocation.width / 2;
@@ -80,12 +83,11 @@ on_lyricview_button_press_event          (GtkWidget       *widget,
                                         gpointer         user_data)
 {
 	LyricView *lyricview = (LyricView *) widget;
-        GValue value = {0};
-        g_value_init(&value, G_TYPE_INT);
-        gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "y", &value);
-        lyricview->top = g_value_get_int(&value);
-        lyricview->y = event->y;
-	
+	lyricview->top = widget->allocation.y;
+	lyricview->left = widget->allocation.x;
+	lyricview->x = event->x;
+	lyricview->y = event->y;
+	printf("good\n");
 	lyricview->dragging = TRUE;
         return FALSE;
 }
@@ -129,30 +131,49 @@ on_lyricview_motion_notify_event         (GtkWidget       *widget,
 	
 	if (lyricview->dragging)
 	{
-	        int cury = event->y;
-	        int newy = lyricview->top + cury - lyricview->y;
+		if (lyricview->horizontal)
+		{
+			int curx = event->x;
+			int newx = lyricview->left + curx - lyricview->x;
+			int width = widget->allocation.width;
+			int vbox_width;
+			if (newx < -lyricview->vbox->allocation.width + width / 2)
+				newx = -lyricview->vbox->allocation.width + width / 2;
+			if (newx > width / 2)
+				newx = width / 2;
+			gtk_layout_move(GTK_LAYOUT(widget), lyricview->vbox, newx, 0);
+		}
+		else
+		{
+			int cury = event->y;
+			int newy = lyricview->top + cury - lyricview->y;
 
-	        int height;
+			int height;
 
-	        height = widget->allocation.height;
+			height = widget->allocation.height;
 
-		int vbox_height;
-	        if (newy < - lyricview->vbox->allocation.height + height / 2)
-	                newy = - lyricview->vbox->allocation.height + height / 2;
-	        if (newy > height / 2)
-	                newy = height / 2;
-	        gtk_layout_move((GtkLayout *) widget, lyricview->vbox, 0, newy);
+			int vbox_height;
+			if (newy < - lyricview->vbox->allocation.height + height / 2)
+				newy = - lyricview->vbox->allocation.height + height / 2;
+			if (newy > height / 2)
+				newy = height / 2;
+			printf("%d\n", newy);
+			gtk_layout_move((GtkLayout *) widget, lyricview->vbox, 0, newy);
+		}
 	}
-        return FALSE;
+	return FALSE;
 }
 
 
-static void
-lyricview_init (LyricView *ttt)
+static void lyricview_init (LyricView *ttt)
 {
-	ttt->vbox = gtk_vbox_new (TRUE, 5);
+	ttt->horizontal = 0;
+	if (ttt->horizontal)
+		ttt->vbox = gtk_hbox_new(FALSE, 5);
+	else
+		ttt->vbox = gtk_vbox_new(TRUE, 5);
 	gtk_widget_show(ttt->vbox);
-	gtk_layout_put(GTK_LAYOUT(ttt), ttt->vbox, 0, 66);
+	gtk_layout_put(GTK_LAYOUT(ttt), ttt->vbox, 0, 0);
 	ttt->message_label = gtk_label_new(NULL);
 	GdkColor color;
 	gdk_color_parse("red", &color);
@@ -181,7 +202,7 @@ lyricview_init (LyricView *ttt)
 
 
 	gtk_widget_set_events (GTK_WIDGET(ttt), GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
-
+	lyricview_set_message(ttt, "LyricZilla loaded.");
 }
 
 GtkWidget *lyricview_new ()
@@ -196,15 +217,6 @@ inline gint number_between(gint from, gint to, gdouble rate)
 
 void color_between(GdkColor *from, GdkColor *to, gdouble rate, GdkColor *result)
 {
-/*
-
-  rate=0          rate=0.5    0.75   rate=1
-   from              |        ｜          to 
-    |                |        ｜          |
-    ------------------------------------
-*/
-
-// 4             1, 0.75
 	result->pixel = number_between(from->pixel, to->pixel, rate);
 	result->red = number_between(from->red, to->red, rate);
 	result->green = number_between(from->green, to->green, rate);
@@ -221,6 +233,13 @@ void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
 
 	gtk_widget_show (item->label);
 	gtk_box_pack_start (GTK_BOX (lyricview->vbox), item->label, FALSE, FALSE, 0);
+/*
+	gboolean expand, fill;
+	guint padding;
+	GtkPackType pack_type;
+	gtk_box_query_child_packing(GTK_BOX(lyricview->vbox), item->label, &expand, &fill, &padding, &pack_type);
+	gtk_box_set_child_packing(GTK_BOX(lyricview->vbox), item->label, FALSE, fill, padding, pack_type);
+*/	
 	lyricview->ones = g_list_append(lyricview->ones, item);
 
 	gtk_widget_hide(lyricview->message_label);
@@ -236,9 +255,6 @@ void lyricview_set_message(LyricView *lyricview, gchar *message)
 void lyricview_set_current_time(LyricView *lyricview, gint time)
 {
 	GList *list = lyricview->ones;
-
-
-
 
 	GList *previous = lyricview->current;
 	GList *current = lyricview->current;
@@ -261,7 +277,7 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 	{
 		gint p_time = ((LyricItem *)(p->data))->time;
 		gint pn_time = p->next ? ((LyricItem *)(p->next->data))->time : 0;
-		
+
 		if (time < p_time - threshold || p->next && pn_time + threshold < time)
 			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &lyricview->colors.normal);		
 		else if (time < p_time + threshold)
@@ -270,7 +286,7 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 			GdkColor color;
 			color_between(&lyricview->colors.normal, &lyricview->colors.current, (gdouble) delta / threshold, &color);
 			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &color);
-			
+
 		}
 		else if (p->next && time < pn_time - threshold)
 			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &lyricview->colors.current);
@@ -286,19 +302,41 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 	// make the current line at middle
 	if (current && !lyricview->dragging)
 	{
-		int newy = lyricview->vbox->allocation.y - GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.y;
-		newy += GTK_WIDGET(lyricview)->allocation.height / 2;
-		newy -= GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.height / 2;
-		if (current->next)
+		if (lyricview->horizontal)
 		{
-			int time_current = ((LyricItem *)current->data)->time;
-			int time_next = ((LyricItem *)current->next->data)->time;
-			int height = GTK_WIDGET(((LyricItem *)current->next->data)->label)->allocation.y -
-				GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.y;
-			newy -= height * (time - time_current) / (time_next - time_current);
-			newy += height / 2;
+
+			int newx = lyricview->vbox->allocation.x - GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.x;
+			newx += GTK_WIDGET(lyricview)->allocation.width / 2;
+			newx -= GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.width / 2;
+			if (current->next)
+			{
+				int time_current = ((LyricItem *)current->data)->time;
+				int time_next = ((LyricItem *)current->next->data)->time;
+				int width = GTK_WIDGET(((LyricItem *)current->next->data)->label)->allocation.x -
+					GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.x;
+				newx -= width * (time - time_current) / (time_next - time_current);
+				newx += width / 2;
+			}
+			gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, newx, 0);
+
 		}
-		gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, 0, newy);
+		else
+		{
+			int newy = lyricview->vbox->allocation.y - GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.y;
+			newy += GTK_WIDGET(lyricview)->allocation.height / 2;
+			newy -= GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.height / 2;
+			if (current->next)
+			{
+				int time_current = ((LyricItem *)current->data)->time;
+				int time_next = ((LyricItem *)current->next->data)->time;
+				int height = GTK_WIDGET(((LyricItem *)current->next->data)->label)->allocation.y -
+					GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.y;
+				newy -= height * (time - time_current) / (time_next - time_current);
+				newy += height / 2;
+			}
+			gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, 0, newy);
+		}
+		printf("%d %d %d\n", GTK_WIDGET(lyricview->vbox)->allocation.x, GTK_WIDGET(lyricview->vbox)->allocation.y, GTK_WIDGET(lyricview->vbox)->allocation.width);
 	}
 }
 
