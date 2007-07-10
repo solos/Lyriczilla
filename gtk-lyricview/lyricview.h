@@ -60,6 +60,7 @@ void lyricview_set_message(LyricView *lyricview, gchar *message);
 void lyricview_append_text(LyricView *, gint time, const gchar *text);
 void lyricview_set_current_time(LyricView *, gint time);
 void lyricview_clear(LyricView *);
+void lyricview_overall_adjust_by(LyricView *, gint);
 
 #ifdef __cplusplus
 }

@@ -76,6 +76,10 @@ on_lyricview_size_allocate               (GtkWidget       *widget,
 	GTK_WIDGET(lyricview->message_label)->allocation.y = y;
 }
 
+void on_lyricview_popup_menu(GtkWidget *widget, gpointer user_data)
+{
+	printf("TODO: popup a menu.\n");
+}
 
 gboolean
 on_lyricview_button_press_event          (GtkWidget       *widget,
@@ -83,16 +87,22 @@ on_lyricview_button_press_event          (GtkWidget       *widget,
                                         gpointer         user_data)
 {
 	LyricView *lyricview = (LyricView *) widget;
-	
-        GValue value = {0};
-        g_value_init(&value, G_TYPE_INT);
-        gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "y", &value);
-        lyricview->top = g_value_get_int(&value);
-        gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "x", &value);        
-	lyricview->left = g_value_get_int(&value);
-	lyricview->x = event->x;
-	lyricview->y = event->y;
-	lyricview->dragging = TRUE;
+	if (event->button == 1)
+	{
+	        GValue value = {0};
+	        g_value_init(&value, G_TYPE_INT);
+	        gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "y", &value);
+	        lyricview->top = g_value_get_int(&value);
+	        gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "x", &value);        
+		lyricview->left = g_value_get_int(&value);
+		lyricview->x = event->x;
+		lyricview->y = event->y;
+		lyricview->dragging = TRUE;
+	}
+	else
+	{
+		printf("TODO: menu!!\n");
+	}
         return FALSE;
 }
 
@@ -173,6 +183,14 @@ on_lyricview_motion_notify_event         (GtkWidget       *widget,
 	return FALSE;
 }
 
+gboolean on_lyricview_scroll_event(GtkWidget *widget, GdkEventScroll *event, gpointer user_data)
+{
+	LyricView *lyricview = LYRIC_VIEW(widget);
+	if (event->direction == GDK_SCROLL_UP || event->direction == GDK_SCROLL_LEFT)
+		lyricview_overall_adjust_by(lyricview, 300);
+	else
+		lyricview_overall_adjust_by(lyricview, -300);
+}
 
 static void lyricview_init (LyricView *ttt)
 {
@@ -208,7 +226,12 @@ static void lyricview_init (LyricView *ttt)
 	g_signal_connect ((gpointer) ttt, "motion_notify_event",
 			G_CALLBACK (on_lyricview_motion_notify_event),
 			NULL);
-
+	g_signal_connect ((gpointer) ttt, "popup_menu",
+			G_CALLBACK (on_lyricview_popup_menu),
+			NULL);
+	g_signal_connect ((gpointer) ttt, "scroll_event",
+			G_CALLBACK (on_lyricview_scroll_event),
+			NULL);
 
 	gtk_widget_set_events (GTK_WIDGET(ttt), GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
 	lyricview_set_message(ttt, "LyricZilla");
@@ -358,5 +381,17 @@ void lyricview_clear(LyricView *lyricview)
 	lyricview->ones = lyricview->current = NULL;
 	gtk_widget_hide(lyricview->vbox);
 	gtk_widget_show(lyricview->message_label);
+}
+
+
+void lyricview_overall_adjust_by(LyricView *widget, gint time)
+{
+	LyricView *lyricview = LYRIC_VIEW(widget);
+	GList *list = lyricview->ones;
+	while (list)
+	{
+		((LyricItem *)list->data)->time += time;
+		list = list->next;
+	}
 }
 
