@@ -1,4 +1,4 @@
-SVNVERSION=`svnversion -nc . | sed -e 's/^[^:]*://;s/[A-Za-z]//'`
+SVNVERSION=`svnversion -n . | sed -e 's/^[^:]*://;s/[A-Za-z]//'`
 VERSION=0.1.$(SVNVERSION)
 REPLACE=s/__VERSION__/$(VERSION)/g
 
