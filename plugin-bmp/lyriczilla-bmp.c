@@ -215,7 +215,6 @@ gboolean on_timeout(gpointer data)
 	{
 		gint playlist_pos = xmms_remote_get_playlist_pos(session);
 		gchar *filename = (gchar *)xmms_remote_get_playlist_file(session, playlist_pos);
-		printf("%s\n", filename);
 		if (!last_filename || !filename || strcmp(last_filename, filename)) // currently playing another song.
 		{
 			g_free(last_filename);
@@ -228,8 +227,6 @@ gboolean on_timeout(gpointer data)
 				cfg_ptr->titlestring_preset = 1000; // last one
 				char *title, *artist;
 				int len_real;
-
-				printf("orig = %d %s\n", orig_titlestring_preset, orig_gentitle_format);
 
 				cfg_ptr->gentitle_format = "%t";
 				_input_get_song_info(filename, &title, &len_real);
@@ -256,7 +253,6 @@ gboolean on_timeout(gpointer data)
 					NULL,
 				};
 
-				printf("title artist: %s %s\n", title, artist);
 				if (pid)
 				{
 					kill(pid, 9);
@@ -303,7 +299,6 @@ void lyric_init()
 	gtk_widget_modify_bg(lyricview, GTK_STATE_NORMAL, &LYRIC_VIEW(lyricview)->colors.background);
 
 	GtkWidget **mainwin_ptr = dlsym(handle, "mainwin");
-	printf("mainwin: %s\n", gtk_window_get_title(GTK_WINDOW(*mainwin_ptr)));
 	/*	gtk_window_set_transient_for(GTK_WINDOW(lyricwin), GTK_WINDOW(*mainwin_ptr));
 
 		gtk_window_set_skip_taskbar_hint(GTK_WINDOW(lyricwin), TRUE);
