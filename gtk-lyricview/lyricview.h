@@ -22,6 +22,7 @@ struct _LyricItem
 	gint time;
 	gchar *text;
 	GtkWidget *label;
+	gboolean process_color;
 };
 
 struct _LyricViewColors

@@ -261,6 +261,7 @@ void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
 	item->time = time;
 	item->text = g_strdup(text);
 	item->label = gtk_label_new(item->text);
+	item->process_color = FALSE;
 	gtk_widget_modify_fg(item->label, GTK_STATE_NORMAL, &lyricview->colors.normal);
 
 	gtk_widget_show (item->label);
@@ -306,23 +307,33 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 		gint pn_time = p->next ? ((LyricItem *)(p->next->data))->time : 0;
 
 		if (time < p_time - threshold || p->next && pn_time + threshold < time)
-			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &lyricview->colors.normal);		
+		{
+			if (((LyricItem *)p->data)->process_color)
+			{
+				((LyricItem *)p->data)->process_color = FALSE;
+				gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &lyricview->colors.normal);
+			}
+		}
 		else if (time < p_time + threshold)
 		{
 			int delta = (time - p_time + threshold) / 2;
 			GdkColor color;
 			color_between(&lyricview->colors.normal, &lyricview->colors.current, (gdouble) delta / threshold, &color);
 			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &color);
-
+			((LyricItem *)p->data)->process_color = TRUE;
 		}
 		else if (p->next && time < pn_time - threshold)
+		{
 			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &lyricview->colors.current);
+			((LyricItem *)p->data)->process_color = TRUE;
+		}
 		else if (p->next && time < pn_time + threshold)
 		{
 			int delta = (pn_time + threshold - time) / 2;
 			GdkColor color;
 			color_between(&lyricview->colors.normal, &lyricview->colors.current, (gdouble) delta / threshold, &color);
 			gtk_widget_modify_fg(((LyricItem *)p->data)->label, GTK_STATE_NORMAL, &color);
+			((LyricItem *)p->data)->process_color = TRUE;
 		}
 	}
 	
