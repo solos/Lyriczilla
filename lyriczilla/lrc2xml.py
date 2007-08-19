@@ -53,9 +53,12 @@ def lrc2xml(lrc):
 					continue
 				for j in range(len(value)):
 					time=offset #offset using here
-					if value[j][1].find(".")!=-1:
+					if '.' in value[j][1]:
 						time+=int(value[j][0])*60*1000
 						time+=int(value[j][1].split('.',2)[0])*1000+int(value[j][1].split('.',2)[1])
+					elif ':' in value[j][1]:
+						time+=int(value[j][0])*60*1000
+						time+=int(value[j][1].split(':',2)[0])*1000+int(value[j][1].split(':',2)[1])*100/60
 					else:
 						time+=int(value[j][0])*60*1000
 						time+=int(value[j][1])*1000
