@@ -254,7 +254,7 @@ lyriczilla_applet_fill (PanelApplet *applet,
 		return FALSE;
 
         widget = lyricview_new();
-        gtk_widget_set_size_request(applet, 400, 20);
+        gtk_widget_set_size_request(applet, 200, 20);
         gtk_widget_show(widget);
 	gtk_container_add (GTK_CONTAINER (applet), widget);
         gtk_widget_show(widget);

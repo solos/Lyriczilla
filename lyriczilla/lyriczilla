@@ -33,9 +33,11 @@ if __name__ == "__main__":
 		url = 'http://www.winampcn.com/lyrictransfer/get.aspx?song=%s&artist=%s&lsong=%s&Datetime=20060601' % (title_encode, artist_encode, title_encode)
 	
 		xmltext = urllib2.urlopen(url).read()
-	
-		xmltext = xmltext.decode('gbk').encode('UTF-8')
-		xmltext = xmltext.replace('encoding="gb2312"', 'encoding="UTF-8"')
+		try:
+			xmltext = xmltext.decode('gbk').encode('UTF-8')
+			xmltext = xmltext.replace('encoding="gb2312"', 'encoding="UTF-8"')
+		except:
+			pass
 
 		xmldoc = minidom.parseString(xmltext)
 
