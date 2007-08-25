@@ -1,5 +1,12 @@
+#ifdef AUDACIOUS
+#include <audacious/plugin.h>
+#include <audacious/input.h>
+#include <audacious/titlestring.h>
+#endif
+#ifdef BEEP_MEDIA_PLAYER
 #include <bmp/plugin.h>
 #include <bmp/titlestring.h>
+#endif
 #include <stdio.h>
 #include <glib.h>
 #include <libxml/xmlreader.h>
@@ -68,7 +75,7 @@ static void (*_input_get_song_info) (char *filename, char **title_real, int *len
 BmpConfig *cfg_ptr;
 
 GtkWidget *lyricwin, *lyricview;
-#define LYRIC_VIEW(widget) ((LyricView *) (widget))
+
 pid_t pid = 0;
 
 gboolean on_stage_2_data(GIOChannel *source, GIOCondition condition, gpointer data)
@@ -222,10 +229,18 @@ gboolean on_timeout(gpointer data)
 
 			if (!load_local_lrc(filename))
 			{
+				char *title, *artist;
+			
+#ifdef AUDACIOUS
+				TitleInput *input = input_get_song_tuple(filename);
+				title = strdup(input->track_name);
+				artist = strdup(input->performer);
+				bmp_title_input_free(input);
+#endif
+#ifdef BEEP_MEDIA_PLAYER
 				gint orig_titlestring_preset = cfg_ptr->titlestring_preset;
 				gchar *orig_gentitle_format = cfg_ptr->gentitle_format;
 				cfg_ptr->titlestring_preset = 1000; // last one
-				char *title, *artist;
 				int len_real;
 
 				cfg_ptr->gentitle_format = "%t";
@@ -236,6 +251,7 @@ gboolean on_timeout(gpointer data)
 				// restore them back
 				cfg_ptr->titlestring_preset = orig_titlestring_preset;
 				cfg_ptr->gentitle_format = orig_gentitle_format;
+#endif
 
 				lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
 
@@ -262,6 +278,9 @@ gboolean on_timeout(gpointer data)
 				g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
 				GIOChannel *channel = g_io_channel_unix_new(pipefd);
 				g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_1_data, lyricview);
+				
+				free(title);
+				free(artist);
 			}
 		}
 
