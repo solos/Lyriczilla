@@ -233,6 +233,8 @@ gboolean on_timeout(gpointer data)
 			
 #ifdef AUDACIOUS
 				TitleInput *input = input_get_song_tuple(filename);
+				if (!input)
+					return TRUE;
 				title = strdup(input->track_name);
 				artist = strdup(input->performer);
 				bmp_title_input_free(input);
