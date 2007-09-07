@@ -1,7 +1,9 @@
 #include <string.h>
 #include <panel-applet.h>
 #include <gtk/gtklabel.h>
-#include <bmp/beepctrl.h>
+#include <audacious/plugin.h>
+#include <audacious/input.h>
+#include <audacious/titlestring.h>
 #include <libxml/xmlreader.h>
 
 #include "../gtk-lyricview/lyricview.h"
@@ -165,11 +167,12 @@ gboolean on_timeout(gpointer data)
 
 			if (!load_local_lrc(lyricview, filename))
 			{
-				gchar *title = 0;
-			       	gchar *artist = 0;
-				// TODO: get them!
-				
-				
+				gchar *title, *artist;
+
+				TitleInput *input = input_get_song_tuple(filename);
+				title = strdup(input->track_name);
+				artist = strdup(input->performer);
+				bmp_title_input_free(input);
 
 				lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
 

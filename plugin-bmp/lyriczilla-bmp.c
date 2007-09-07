@@ -233,10 +233,10 @@ gboolean on_timeout(gpointer data)
 			
 #ifdef AUDACIOUS
 				TitleInput *input = input_get_song_tuple(filename);
-				if (!input)
+				if (!input || !input->track_name)
 					return TRUE;
-				title = strdup(input->track_name);
-				artist = strdup(input->performer);
+				title = input->track_name ? strdup(input->track_name) : NULL;
+				artist = input->performer ? strdup(input->performer) : NULL;
 				bmp_title_input_free(input);
 #endif
 #ifdef BEEP_MEDIA_PLAYER
@@ -266,10 +266,15 @@ gboolean on_timeout(gpointer data)
 					"lyriczilla",
 					"-t",
 					title,
-					"-a",
-					artist,
+					NULL,
+					NULL,
 					NULL,
 				};
+				if (artist)
+				{
+					argv[3] = "-a";
+					argv[4] = artist;
+				}
 
 				if (pid)
 				{
