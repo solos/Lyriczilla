@@ -143,7 +143,11 @@ on_lyricview_button_release_event        (GtkWidget       *widget,
 	}
 
 	if (previous != current)
-		g_signal_emit (G_OBJECT (widget), lyricview_signals[TIME_CHANGE_SIGNAL], 0, GINT_TO_POINTER(((LyricItem *)current->data)->time));
+	{
+		int time = ((LyricItem *)current->data)->time;
+		g_signal_emit (G_OBJECT (widget), lyricview_signals[TIME_CHANGE_SIGNAL], 0, GINT_TO_POINTER(time));
+		lyricview_set_current_time((LyricView *)lyricview, time);
+	}
 	
         return FALSE;
 }

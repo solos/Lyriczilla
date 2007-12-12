@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# I will rewrite this file soon.
 
 from sys import stdin
 import re
@@ -6,7 +6,7 @@ from re import findall
 from string import replace, lower
 from xml.dom import minidom
 
-def lrc2xml(lrc):
+def lrctolist(lrc):
 	#pattern = '\[(?P<type>.*?):(?P<value>.*?)\](?P<tail>.*)'
 	pattern = '\[.*\](?P<tail>.?)'
 	pt_value= '\[(?P<type>.+?):(?P<value>.+?)\]'
@@ -45,7 +45,7 @@ def lrc2xml(lrc):
 					editor = namev
 					continue
 				if name=='offset':
-					offset = long(namev)
+					offset = int(namev)
 					continue
 				if name=='la':
 					continue
@@ -68,21 +68,5 @@ def lrc2xml(lrc):
 
 						
 	arrays.sort()
-	
-	
-	dom = minidom.getDOMImplementation().createDocument(None, 'song', None)
-	root = dom.documentElement
-	root.setAttribute('title', title);
-	root.setAttribute('artist', artist);
-	root.setAttribute('album', album);
-	root.setAttribute('editor', editor);
+	return arrays
 
-	for time, text in arrays:
-		elem = dom.createElement('one')
-		elem.setAttribute('time', str(time))
-		elem.appendChild(dom.createTextNode(text))
-		root.appendChild(elem)
-	return dom.toxml()
-
-if __name__ == "__main__":
-	print lrc2xml(stdin.read())

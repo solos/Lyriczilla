@@ -4,23 +4,9 @@
 #include <audacious/plugin.h>
 #include <stdio.h>
 #include <glib.h>
-#include <libxml/xmlreader.h>
-#include <dlfcn.h>
 #include <string.h>
 
 #include "../gtk-lyricview/lyricview.h"
-/*
-
-   gpointer handle;
-   gchar *filename;
-   gint xmms_session;
-   gchar *description;
-   void (*init) (void);
-   void (*about) (void);
-   void (*configure) (void);
-   void (*cleanup) (void);
-
-*/
 
 #define _
 
@@ -33,7 +19,7 @@ gint timeout_id;
 
 static GeneralPlugin audaciouslyriczilla =
 {
- .description = "LyricZilla Audacious Plugin",
+ .description = "LyricZilla Plugin",
  .init = lyric_init,
  .about = lyric_about,
  .cleanup = lyric_cleanup
@@ -46,141 +32,6 @@ GtkWidget *lyricwin, *lyricview;
 
 pid_t pid = 0;
 
-gboolean on_stage_2_data(GIOChannel *source, GIOCondition condition, gpointer data)
-{
-	gchar *str;
-	gsize length;
-	g_io_channel_read_to_end(source, &str, &length, NULL);
-
-	kill(pid, 9);
-	pid = 0;
-	xmlDocPtr xmldoc = xmlParseMemory(str, length);
-	if (!xmldoc)
-	{
-		lyricview_set_message(LYRIC_VIEW(lyricview), "Error while parsing lyric.");
-		return FALSE;
-	}
-	xmlNodePtr song = xmldoc->children;
-	char *id = NULL;
-	while (song)
-	{
-		xmlNodePtr one = song->children;
-		while (one)
-		{
-			if (xmlStrcmp(one->name, (xmlChar *) "one") == 0)
-			{
-				gint time = atoi(xmlGetProp(one, "time"));
-				gchar *text = one->children ? (gchar *) one->children->content : "";
-				
-				lyricview_append_text((LyricView *)lyricview, time, text);
-			}
-			one = one->next;
-		}
-		song = song->next;
-	}
-
-	return FALSE;
-}
-
-gboolean on_stage_1_data(GIOChannel *source, GIOCondition condition, gpointer data)
-{
-	LyricView *lyricview = (LyricView *) data;
-	gchar *str;
-	gsize length;
-	g_io_channel_read_to_end(source, &str, &length, NULL);
-
-	xmlDocPtr xmldoc = xmlParseMemory(str, length);
-	
-	if (!xmldoc)
-	{
-		lyricview_set_message(LYRIC_VIEW(lyricview), "Error while searching.");
-		return FALSE;
-	}
-	xmlNodePtr lyrics = xmldoc->children;
-	char *id = NULL;
-	while (lyrics)
-	{
-		xmlNodePtr lyric = lyrics->children;
-		while (lyric)
-		{
-			if (xmlStrcmp(lyric->name, (xmlChar *) "lyric") == 0)
-			{
-				id = xmlGetProp(lyric, "id");
-				break;
-			}
-			if (id)
-				break;
-			lyric = lyric->next;
-		}
-		if (id)
-			break;
-		lyrics = lyrics->next;
-	}
-
-	if (id)
-	{
-		gchar *argv[3] =
-		{
-			"lyriczilla",
-			id,
-			NULL,
-		};
-		kill(pid, 9);
-		pid = 0;
-		int pipefd;
-		g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
-		GIOChannel *channel = g_io_channel_unix_new(pipefd);
-
-		lyricview_set_message(lyricview, "Downloading lyric...");
-
-		g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_2_data, NULL);
-	
-	}
-	else
-		lyricview_set_message(lyricview, "Not found.");
-
-	return FALSE;
-}
-
-gboolean load_local_lrc(const gchar *filename)
-{
-	size_t pos = strlen((const char *) filename);
-
-	while (pos > 0 && filename[pos] != '.')
-		pos--;
-
-	gchar *file = g_strndup(filename, pos);
-	gchar *lrc_filename = g_strconcat(file, ".lrc", NULL);
-	g_free(file);
-
-	if (!g_file_test(lrc_filename, G_FILE_TEST_IS_REGULAR))
-		return FALSE;
-
-	lyricview_clear((LyricView *)lyricview);
-	gchar *argv[4] =
-	{
-		"lyriczilla",
-		"-l",
-		lrc_filename,
-		NULL,
-	};
-
-	if (pid)
-	{
-		kill(pid, 9);
-		pid = 0;
-	}
-	int pipefd;
-	g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
-	GIOChannel *channel = g_io_channel_unix_new(pipefd);
-	lyricview_set_message((LyricView *) lyricview, "Loading local lyric...");
-	g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_2_data, NULL);
-
-
-	return TRUE;
-
-}
-
 gchar *last_filename = NULL;
 
 
@@ -192,44 +43,76 @@ gboolean enable_auto_scroll_again(gpointer data)
 	return FALSE;
 }
 
+void add_to_widget(gpointer data, gpointer user_data)
+{
+	GValueArray *valarr = (GValueArray *) data;
+	
+	int time = g_value_get_int(g_value_array_get_nth(valarr, 0));
+	char *text = g_value_get_string(g_value_array_get_nth(valarr, 1));
+	
+	printf("%d %s\n", time, text);
+	
+	lyricview_append_text(lyricview, time, text);
+	
+
+/*
+	GHashTable *hash = (GHashTable *)data;
+	gchar *title = (gchar *) g_hash_table_lookup(hash, (gpointer) "title");
+	if (title)
+		printf("%s\n", title);
+		*/
+}
+
 gboolean on_timeout(gpointer data)
 {
 	Playlist *playlist = aud_playlist_get_active();
-	if (auto_scroll && playlist)//(xmms_remote_get_playlist_length(session))
+	if (auto_scroll && playlist)
 	{
-
-		printf("one!!\n");
 		gint playlist_pos = aud_playlist_get_position(playlist);
-		
-		printf("pos = %d\n", playlist_pos);
 		
 		gchar *filename = (gchar *)aud_playlist_get_filename(playlist, playlist_pos);
 		
-		printf("filename = %s\n", filename);
-		
-		if (!last_filename || !filename || strcmp(last_filename, filename)) // currently playing another song.
+		if (!last_filename || !filename || strcmp(last_filename, filename)) // playing another song.
 		{
-			printf("two!!\n");
 			g_free(last_filename);
 			last_filename = filename;
-			printf("three!!\n");
 
-			if (!load_local_lrc(filename))
-			{
-				printf("four!!\n");
 
-				char *title, *artist;
+			Tuple *out = aud_playlist_get_tuple(playlist, playlist_pos);
 			
-				title = g_strdup("Someone");
-				artist = g_strdup("");
-			printf("4.5!!\n");
+			char *title = (char *) aud_tuple_get_string(out, FIELD_TITLE, NULL);
+			char *artist = (char *) aud_tuple_get_string(out, FIELD_ARTIST, NULL);
+			
+			printf("title artist: %s %s\n", title, artist);
 
-				lyricview_set_message((LyricView *)lyricview, "Searching for lyric...");
-			printf("5!!\n");
+			lyricview_set_message((LyricView *)lyricview, _("Searching for lyrics..."));
 
-				// clear the old lyric
-				lyricview_clear((LyricView *)lyricview);
+			// clear the old lyric
+			lyricview_clear((LyricView *)lyricview);
+			
 
+			GPtrArray *result = GetLyricList(title, artist);
+			
+			printf("result = %d\n", result->len);
+			
+			if (result->len > 0)
+			{
+				GHashTable *hash = (GHashTable *)result->pdata[0];
+				gchar *url = (gchar *) g_hash_table_lookup(hash, (gpointer) "url");
+				if (url)
+				{
+					GPtrArray *arr = GetLyric(url);
+					printf(":: %d\n", arr->len);
+					
+					int time;
+					char *text;
+					
+					g_ptr_array_foreach(arr, add_to_widget, NULL);
+					
+				}
+			}
+
+/*
 				// we should load the lyric.
 				gchar *argv[6] =
 				{
@@ -256,10 +139,10 @@ gboolean on_timeout(gpointer data)
 				GIOChannel *channel = g_io_channel_unix_new(pipefd);
 				g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_1_data, lyricview);
 							printf("6!!\n");
+*/
+			free(title);
+			free(artist);
 
-				free(title);
-				free(artist);
-			}
 		}
 
 		gint time = audacious_drct_get_time();//(playlist, playlist_pos);
@@ -301,7 +184,7 @@ static void lyric_init()
 //	g_signal_connect (G_OBJECT (*mainwin_ptr), "hide", G_CALLBACK(lyric_cleanup), NULL);
 
 	gtk_widget_show(lyricview);
-	aud_dock_add_window(aud_get_dock_window_list(), lyricwin);
+	aud_dock_add_window(aud_get_dock_window_list(), (GtkWindow *)lyricwin);
 	gtk_widget_show(lyricwin);
 	timeout_id = g_timeout_add(50, on_timeout, 0);
 }
