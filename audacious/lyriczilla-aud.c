@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <glib.h>
 #include <string.h>
-
+#include <glade/glade.h>
 #include "../gtk-lyricview/lyricview.h"
 
 #define _
@@ -67,18 +67,17 @@ int state = 0;
 
 void on_lyric_list_arrive(GPtrArray *result)
 {
-	if (result->len > 0)
+	if (!result)
+	{
+		lyricview_set_message((LyricView *)lyricview, _("Error while querying lyric list."));
+	}
+	else if (result->len > 0)
 	{
 		GHashTable *hash = (GHashTable *)result->pdata[0];
 		gchar *url = (gchar *) g_hash_table_lookup(hash, (gpointer) "url");
 		if (url)
 		{
 			GPtrArray *arr = GetLyric(url);
-			printf(":: %d\n", arr->len);
-			
-			int time;
-			char *text;
-			
 			g_ptr_array_foreach(arr, add_to_widget, NULL);
 			
 		}
@@ -88,46 +87,39 @@ void on_lyric_list_arrive(GPtrArray *result)
 	{
 		lyricview_set_message((LyricView *)lyricview, _("Cannot found any lyric matching this song."));
 		state = 0;
-	}
-	
+	}	
 }
 
-gboolean on_timeout(gpointer data)
+gboolean on_timer(gpointer data)
 {
 	Playlist *playlist = aud_playlist_get_active();
 	if (auto_scroll && playlist)
 	{
 		gint playlist_pos = aud_playlist_get_position(playlist);
 		
+		
 		gchar *filename = (gchar *)aud_playlist_get_filename(playlist, playlist_pos);
 		
-		if (!last_filename || !filename || strcmp(last_filename, filename)) // playing another song.
+		if (filename && (!last_filename || strcmp(last_filename, filename))) // playing another song.
 		{
 			g_free(last_filename);
 			last_filename = filename;
 
-			if (state == 0)
-			{
+			Tuple *out = aud_playlist_get_tuple(playlist, playlist_pos);
 
-				Tuple *out = aud_playlist_get_tuple(playlist, playlist_pos);
+			char *title = (char *) aud_tuple_get_string(out, FIELD_TITLE, NULL);
+			char *artist = (char *) aud_tuple_get_string(out, FIELD_ARTIST, NULL);
 			
-				char *title = (char *) aud_tuple_get_string(out, FIELD_TITLE, NULL);
-				char *artist = (char *) aud_tuple_get_string(out, FIELD_ARTIST, NULL);
-			
-				printf("title artist: %s %s\n", title, artist);
+			printf("title artist: %s %s\n", title, artist);
 
-				lyricview_set_message((LyricView *)lyricview, _("Searching for lyrics..."));
+			lyricview_set_message((LyricView *)lyricview, _("Searching for lyrics..."));
 
-				// clear the old lyric
-				lyricview_clear((LyricView *)lyricview);
+			// clear the old lyric
+			lyricview_clear((LyricView *)lyricview);
+		
+			state = 1;
 			
-				state = 1;
-				
-				GetLyricList_async(title, artist, on_lyric_list_arrive);
-			
-				free(title);
-				free(artist);
-			}
+			GetLyricList_async(title, artist, on_lyric_list_arrive);
 
 		}
 
@@ -171,8 +163,14 @@ static void lyric_init()
 
 	gtk_widget_show(lyricview);
 	aud_dock_add_window(aud_get_dock_window_list(), (GtkWindow *)lyricwin);
+	
+	gtk_window_set_keep_above(GTK_WINDOW(lyricwin), TRUE);
+	gtk_window_set_skip_taskbar_hint(GTK_WINDOW(lyricwin), TRUE);	
+//	gtk_window_set_decorated(GTK_WINDOW(lyricwin), FALSE);
+
+
 	gtk_widget_show(lyricwin);
-	timeout_id = g_timeout_add(50, on_timeout, 0);
+	timeout_id = g_timeout_add(50, on_timer, 0);
 }
 
 static void lyric_about()

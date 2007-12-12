@@ -1,6 +1,9 @@
 
 #include <gtk/gtk.h>
+#include <glade/glade.h>
 #include "lyricview.h"
+
+#define _(x) (x)
 
 enum {
   TIME_CHANGE_SIGNAL,
@@ -76,10 +79,139 @@ on_lyricview_size_allocate               (GtkWidget       *widget,
 	GTK_WIDGET(lyricview->message_label)->allocation.y = y;
 }
 
+GtkWidget *get_widget(char *widgetname);
+
+void on_menu_search_activate(GtkMenuItem *menuitem,
+                                                        gpointer     user_data)
+{
+	gtk_widget_show(get_widget("searchwin"));
+}
+
+void on_button_cancel_clicked()
+{
+}
+
+
+void treeview_lyric_add_header()
+{
+	static gboolean added = FALSE;
+	
+	if (added)
+		return;
+	added = TRUE;
+	
+	GtkWidget *treeview_lyric = get_widget("treeview_lyric");
+	
+	GtkTreeViewColumn *column;
+	
+
+	GtkCellRenderer *cell;
+	
+	cell = gtk_cell_renderer_text_new();
+
+	column = gtk_tree_view_column_new();
+	gtk_tree_view_column_set_title(column, _("Title"));
+	gtk_tree_view_column_pack_start(column, cell, TRUE);
+	gtk_tree_view_column_set_attributes(column, cell, "text", 0, NULL);	
+	gtk_tree_view_append_column (GTK_TREE_VIEW(treeview_lyric), column);
+	
+	cell = gtk_cell_renderer_text_new();
+
+	column = gtk_tree_view_column_new();
+
+	gtk_tree_view_column_set_title(column, _("Artist"));
+	gtk_tree_view_column_pack_start(column, cell, TRUE);
+	gtk_tree_view_column_set_attributes(column, cell, "text", 1, NULL);	
+	gtk_tree_view_append_column (GTK_TREE_VIEW(treeview_lyric), column);
+	
+	printf("doddddddd\n");
+}
+
+
+void on_search_lyric_list_arrive(GPtrArray *result)
+{
+
+	printf("result here\n");
+	if (!result)
+	{
+		printf("error\n");
+//		lyricview_set_message((LyricView *)lyricview, _("Error while querying lyric list."));
+	}
+	else if (result->len > 0)
+	{
+		printf("len: %d\n", result->len);
+		treeview_lyric_add_header();
+		
+		
+		
+		GtkWidget *treeview_lyric = get_widget("treeview_lyric");
+		GtkListStore* store;
+	
+		store = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+		gtk_tree_view_set_model(treeview_lyric, GTK_TREE_MODEL(store));
+
+		int i;
+		GtkTreeIter iter;
+			
+		for (i = 0; i < result->len; i++)
+		{
+			GHashTable *hash = (GHashTable *)result->pdata[i];
+			
+			gchar *title = (gchar *) g_hash_table_lookup(hash, (gpointer) "title");
+			gchar *artist = (gchar *) g_hash_table_lookup(hash, (gpointer) "artist");
+			gchar *url = (gchar *) g_hash_table_lookup(hash, (gpointer) "url");
+			
+			printf("append: %s %s %s\n", title, artist, url);
+			
+			gtk_list_store_append(store, &iter);
+			gtk_list_store_set(store, &iter, 0, title, 1, artist, 2, url, -1);
+			
+		}
+	}
+	else
+	{
+		printf("no answer\n");
+//		lyricview_set_message((LyricView *)lyricview, _("Cannot found any lyric matching this song."));
+//		state = 0;
+	}	
+}
+
+
+void on_button_find_clicked(GtkButton *button,
+                                                        gpointer   user_data)
+{
+	GtkWidget *entry_title = get_widget("entry_title");
+	GtkWidget *entry_artist = get_widget("entry_artist");
+	
+	const char *title = gtk_entry_get_text(entry_title);
+	const char *artist = gtk_entry_get_text(entry_artist);
+	
+	
+	GetLyricList_async(title, artist, on_search_lyric_list_arrive);
+	printf("going to search %s %s\n", title, artist);
+}
+
+GtkWidget *get_widget(char *widgetname)
+{
+	static GladeXML *xml = NULL;
+	if (!xml)
+	{
+		xml = glade_xml_new("/usr/share/lyriczilla/ui.glade", NULL, NULL);
+//		glade_xml_signal_autoconnect(xml);
+		
+		glade_xml_signal_connect(xml, "on_menu_search_activate", on_menu_search_activate);
+		glade_xml_signal_connect(xml, "on_button_find_clicked", on_button_find_clicked);
+		
+//		g_signal_connect (G_OBJECT (window), "destroy", G_CALLBACK (gtk_main_quit), NULL); 
+	}
+	return glade_xml_get_widget(xml, widgetname);
+}
+
 void on_lyricview_popup_menu(GtkWidget *widget, gpointer user_data)
 {
 	printf("TODO: popup a menu.\n");
 }
+
 
 gboolean
 on_lyricview_button_press_event          (GtkWidget       *widget,
@@ -101,7 +233,8 @@ on_lyricview_button_press_event          (GtkWidget       *widget,
 	}
 	else
 	{
-		printf("TODO: menu!!\n");
+		GtkWidget *menu = get_widget("lyricview_menu");
+		gtk_menu_popup(menu, NULL, NULL, NULL, NULL, 0, gtk_get_current_event_time());
 	}
         return FALSE;
 }

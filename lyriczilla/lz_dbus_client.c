@@ -6,16 +6,6 @@
 #include <pthread.h>
 #include <signal.h>
 
-/*
-void func(gpointer data, gpointer user_data)
-{
-	GHashTable *hash = (GHashTable *)data;
-	gchar *title = (gchar *) g_hash_table_lookup(hash, (gpointer) "title");
-	if (title)
-		printf("%s\n", title);
-}
-*/
-
 DBusGProxy *lz_dbus_get_proxy()
 {
 	DBusGConnection *connection;
@@ -46,10 +36,14 @@ DBusGProxy *lz_dbus_get_proxy()
 	return proxy;
 }
 
+DBusGProxyCall *pending_call = NULL;
+
 
 static void GetLyricList_async_callback(DBusGProxy *proxy, DBusGProxyCall *call, void *(*callback) (GPtrArray *))
 {
 	GError *error = NULL;
+
+	pending_call = NULL;
 	
 #define DBUS_TYPE_G_HASH_TABLE_ARRAY  (dbus_g_type_get_collection ("GPtrArray", DBUS_TYPE_G_STRING_STRING_HASHTABLE))
 	
@@ -64,29 +58,31 @@ static void GetLyricList_async_callback(DBusGProxy *proxy, DBusGProxyCall *call,
 		else
 			g_printerr ("Error: %s\n", error->message);
 		g_error_free (error);
-		exit (1);
+//		exit (1);
 	}
 	callback(arr);
 }
-
-DBusGProxyCall *pending_call = NULL;
-
 
 
 void GetLyricList_async(const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
 {
 	DBusGProxy *proxy = lz_dbus_get_proxy();
+	
+	if (pending_call)
+		dbus_g_proxy_cancel_call(proxy, pending_call);
+	
 	GError *error = NULL;
-	printf("???\n");
 	pending_call = dbus_g_proxy_begin_call (proxy, "GetLyricList", GetLyricList_async_callback, callback, NULL, G_TYPE_STRING, title, G_TYPE_STRING, artist, G_TYPE_STRING, "TEST", G_TYPE_INVALID);
-	printf("done\n");
-
 }
 
 
 GPtrArray *GetLyric(const gchar *url)
 {
 	DBusGProxy *proxy = lz_dbus_get_proxy();
+	
+	if (pending_call)
+		dbus_g_proxy_cancel_call(proxy, pending_call);
+		
 	GError *error = NULL;
 	GPtrArray *arr = NULL;
 	
@@ -104,7 +100,7 @@ GPtrArray *GetLyric(const gchar *url)
 		else
 			g_printerr ("Error: %s\n", error->message);
 		g_error_free (error);
-		exit (1);
+//		exit (1);
 	}
 	return arr;
 }
