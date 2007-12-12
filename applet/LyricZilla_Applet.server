@@ -7,7 +7,7 @@
                         <item value="IDL:Bonobo/GenericFactory:1.0"/>
                         <item value="IDL:Bonobo/Unknown:1.0"/>
                 </oaf_attribute>
-                <oaf_attribute name="name" type="string" value="LyricZilla"/>
+                <oaf_attribute name="name" type="string" value="LyricZilla Applet Factory"/>
                 <oaf_attribute name="description" type="string" value="LyricZilla server factory"/>
         </oaf_server>
 

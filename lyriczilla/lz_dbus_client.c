@@ -3,6 +3,8 @@
 #include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <signal.h>
 
 /*
 void func(gpointer data, gpointer user_data)
@@ -71,6 +73,41 @@ GPtrArray *GetLyricList(const gchar *title, const gchar *artist)
 }
 
 
+void thread_get_lyric_list(void *(*callback) (GPtrArray *))
+{
+	for (;;)
+	{
+		sleep(1);	
+		printf("test\n");
+	}
+}
+
+pthread_t tid = 0;
+
+void lz_dbus_async(void *(*start_routine)(), void *(*callback) (GPtrArray *))
+{
+	pthread_create(&tid, NULL, start_routine, NULL);
+}
+
+void lz_dbus_kill()
+{
+	if (tid)
+	{
+		printf("going to kill %d\n", tid);
+		pthread_cancel(tid);
+		printf("done\n");
+		tid = 0;
+	}
+}
+
+void lz_get_lyric_list_async(const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
+{
+	
+}
+
+GetLyricList 
+
+
 GPtrArray *GetLyric(const gchar *url)
 {
 	DBusGProxy *proxy = lz_dbus_get_proxy();
@@ -97,76 +134,3 @@ GPtrArray *GetLyric(const gchar *url)
 }
 
 
-int main_old (int argc, char **argv)
-{
-	DBusGConnection *connection;
-	GError *error;
-	DBusGProxy *proxy;
-	char **name_list;
-	char **name_list_ptr;
-
-	g_type_init ();
-
-	error = NULL;
-	connection = dbus_g_bus_get (DBUS_BUS_SESSION,
-			&error);
-	if (connection == NULL)
-	{
-		g_printerr ("Failed to open connection to bus: %s\n",
-				error->message);
-		g_error_free (error);
-		exit (1);
-	}
-
-	/* Create a proxy object for the "bus driver" (name "org.freedesktop.DBus") */
-
-	printf("%s %s %s\n", DBUS_SERVICE_DBUS,
-			DBUS_PATH_DBUS,
-			DBUS_INTERFACE_DBUS);
-
-	proxy = dbus_g_proxy_new_for_name (connection,
-			"com.googlecode.lyriczilla",
-			"/LyricZilla",
-			"com.googlecode.lyriczilla.LyricZilla");
-
-	/* Call ListNames method, wait for reply */
-	error = NULL;
-
-	printf("%s\n", DBUS_TYPE_G_STRING_STRING_HASHTABLE);
-
-	GPtrArray *arr;
-
-	//#define DBUS_TYPE_G_STRING_STRING_HASHTABLE (dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_STRING))
-
-
-#define DBUS_TYPE_G_HASH_TABLE_ARRAY  (dbus_g_type_get_collection ("GPtrArray", DBUS_TYPE_G_STRING_STRING_HASHTABLE))
-
-
-	if (!dbus_g_proxy_call (proxy, "GetLyricList", &error, G_TYPE_STRING, "TEST", G_TYPE_STRING, "TEST", G_TYPE_STRING, "TEST", G_TYPE_INVALID,
-				DBUS_TYPE_G_HASH_TABLE_ARRAY, &arr, G_TYPE_INVALID))
-	{
-		/* Just do demonstrate remote exceptions versus regular GError */
-		if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
-			g_printerr ("Caught remote method exception %s: %s",
-					dbus_g_error_get_name (error),
-					error->message);
-		else
-			g_printerr ("Error: %s\n", error->message);
-		g_error_free (error);
-		exit (1);
-	}
-
-	/* Print the results */
-
-	g_print ("Names on the message bus:\n");
-
-	printf("%d\n", arr->len);
-
-//	g_ptr_array_foreach(arr, func, NULL);
-
-	g_ptr_array_free(arr, TRUE);
-
-	g_object_unref (proxy);
-
-	return 0;
-}

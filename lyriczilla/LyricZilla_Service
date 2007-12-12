@@ -37,27 +37,20 @@ class LyricZilla(dbus.service.Object):
 		in_signature='ssb', out_signature='aa{ss}', async_callbacks=('_succ','_fail'))
 		
 	def GetLyricList(self, title, artist, force_load, _succ, _fail):
-		print title, artist
-		if True:
-			#time.sleep(3)
-			#_fail(3)
-			try:
-				l = lz_core.get_lyric_list(title, artist)
-				_succ(l)
-			except:
-				print 'too bad!!'
-				_fail(1)
+		try:
+			l = lz_core.get_lyric_list(title, artist)
+			_succ(l)
+		except:
+			_fail(1)
 				
 	@dbus.service.method("com.googlecode.lyriczilla.LyricZilla",
 		in_signature='sb', out_signature='a(is)', async_callbacks=('_succ','_fail'))
 			
 	def GetLyric(self, url, force_load, _succ, _fail):
-		print 'GetLyric:', url
 		try:
 			l = lz_core.get_lyric(url)
 			_succ(l)
 		except:
-			print 'too bad!!'
 			_fail(1)
 
 	@dbus.service.method("com.googlecode.lyriczilla.LyricZilla",
@@ -76,7 +69,7 @@ if __name__ == '__main__':
 	object = LyricZilla(session_bus, '/LyricZilla')
 
 	mainloop = gobject.MainLoop()
-	print "Running LyricZilla service."
+	print u"Running LyricZilla service."
 	mainloop.run()
 
 

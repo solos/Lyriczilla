@@ -45,9 +45,7 @@ def get_lyric_list(title, artist):
 	return ret
 	
 def get_lyric(url):
-	print 'before'
 	l = lz_lrctolist.lrctolist(urllib2.urlopen(urllib2.quote(url.encode('gbk'), ':/')).read().decode('gbk'))
-	print 'after'
 	return l
 	
 	

@@ -162,6 +162,12 @@ static GtkWidget *(*_ui_skinned_window_new)(const gchar *wmclass_name) = NULL;
 
 static void lyric_init()
 {
+	lz_dbus_init();
+	sleep(3);
+	lz_dbus_kill();
+	
+	sleep(100);
+
 	lyricwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title((GtkWindow *) lyricwin, "LyricZilla");
 	gtk_widget_realize(lyricwin);

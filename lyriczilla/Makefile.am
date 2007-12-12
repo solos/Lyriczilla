@@ -1,3 +1,5 @@
+bin_SCRIPTS = LyricZilla_Service
+libsdir = $(libdir)/python2.5/site-packages
+libs_DATA = lz_core.py lz_lrctolist.py
 
-
-#cc cb.c -o cb `pkg-config --cflags --libs dbus-glib-1 dbus-1` 
+EXTRA_DIST = $(bin_SCRIPTS) $(libs_DATA)
