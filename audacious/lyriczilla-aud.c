@@ -63,6 +63,35 @@ void add_to_widget(gpointer data, gpointer user_data)
 		*/
 }
 
+int state = 0;
+
+void on_lyric_list_arrive(GPtrArray *result)
+{
+	if (result->len > 0)
+	{
+		GHashTable *hash = (GHashTable *)result->pdata[0];
+		gchar *url = (gchar *) g_hash_table_lookup(hash, (gpointer) "url");
+		if (url)
+		{
+			GPtrArray *arr = GetLyric(url);
+			printf(":: %d\n", arr->len);
+			
+			int time;
+			char *text;
+			
+			g_ptr_array_foreach(arr, add_to_widget, NULL);
+			
+		}
+		state = 0;
+	}
+	else
+	{
+		lyricview_set_message((LyricView *)lyricview, _("Cannot found any lyric matching this song."));
+		state = 0;
+	}
+	
+}
+
 gboolean on_timeout(gpointer data)
 {
 	Playlist *playlist = aud_playlist_get_active();
@@ -77,71 +106,28 @@ gboolean on_timeout(gpointer data)
 			g_free(last_filename);
 			last_filename = filename;
 
-
-			Tuple *out = aud_playlist_get_tuple(playlist, playlist_pos);
-			
-			char *title = (char *) aud_tuple_get_string(out, FIELD_TITLE, NULL);
-			char *artist = (char *) aud_tuple_get_string(out, FIELD_ARTIST, NULL);
-			
-			printf("title artist: %s %s\n", title, artist);
-
-			lyricview_set_message((LyricView *)lyricview, _("Searching for lyrics..."));
-
-			// clear the old lyric
-			lyricview_clear((LyricView *)lyricview);
-			
-
-			GPtrArray *result = GetLyricList(title, artist);
-			
-			printf("result = %d\n", result->len);
-			
-			if (result->len > 0)
+			if (state == 0)
 			{
-				GHashTable *hash = (GHashTable *)result->pdata[0];
-				gchar *url = (gchar *) g_hash_table_lookup(hash, (gpointer) "url");
-				if (url)
-				{
-					GPtrArray *arr = GetLyric(url);
-					printf(":: %d\n", arr->len);
-					
-					int time;
-					char *text;
-					
-					g_ptr_array_foreach(arr, add_to_widget, NULL);
-					
-				}
+
+				Tuple *out = aud_playlist_get_tuple(playlist, playlist_pos);
+			
+				char *title = (char *) aud_tuple_get_string(out, FIELD_TITLE, NULL);
+				char *artist = (char *) aud_tuple_get_string(out, FIELD_ARTIST, NULL);
+			
+				printf("title artist: %s %s\n", title, artist);
+
+				lyricview_set_message((LyricView *)lyricview, _("Searching for lyrics..."));
+
+				// clear the old lyric
+				lyricview_clear((LyricView *)lyricview);
+			
+				state = 1;
+				
+				GetLyricList_async(title, artist, on_lyric_list_arrive);
+			
+				free(title);
+				free(artist);
 			}
-
-/*
-				// we should load the lyric.
-				gchar *argv[6] =
-				{
-					"lyriczilla",
-					"-t",
-					title,
-					NULL,
-					NULL,
-					NULL,
-				};
-				if (artist)
-				{
-					argv[3] = "-a";
-					argv[4] = artist;
-				}
-
-				if (pid)
-				{
-					kill(pid, 9);
-					pid = 0;
-				}
-				int pipefd;
-				g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &pipefd, NULL, NULL);
-				GIOChannel *channel = g_io_channel_unix_new(pipefd);
-				g_io_add_watch(channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_stage_1_data, lyricview);
-							printf("6!!\n");
-*/
-			free(title);
-			free(artist);
 
 		}
 
@@ -162,12 +148,6 @@ static GtkWidget *(*_ui_skinned_window_new)(const gchar *wmclass_name) = NULL;
 
 static void lyric_init()
 {
-	lz_dbus_init();
-	sleep(3);
-	lz_dbus_kill();
-	
-	sleep(100);
-
 	lyricwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title((GtkWindow *) lyricwin, "LyricZilla");
 	gtk_widget_realize(lyricwin);

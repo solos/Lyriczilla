@@ -24,7 +24,6 @@ DBusGProxy *lz_dbus_get_proxy()
 
 	if (proxy == NULL)
 	{
-
 		g_type_init ();
 
 		error = NULL;
@@ -47,16 +46,15 @@ DBusGProxy *lz_dbus_get_proxy()
 	return proxy;
 }
 
-GPtrArray *GetLyricList(const gchar *title, const gchar *artist)
+
+static void GetLyricList_async_callback(DBusGProxy *proxy, DBusGProxyCall *call, void *(*callback) (GPtrArray *))
 {
-	DBusGProxy *proxy = lz_dbus_get_proxy();
 	GError *error = NULL;
-	GPtrArray *arr = NULL;
 	
 #define DBUS_TYPE_G_HASH_TABLE_ARRAY  (dbus_g_type_get_collection ("GPtrArray", DBUS_TYPE_G_STRING_STRING_HASHTABLE))
-
-	if (!dbus_g_proxy_call (proxy, "GetLyricList", &error, G_TYPE_STRING, title, G_TYPE_STRING, artist, G_TYPE_STRING, "TEST", G_TYPE_INVALID,
-				DBUS_TYPE_G_HASH_TABLE_ARRAY, &arr, G_TYPE_INVALID))
+	
+	GPtrArray *arr = NULL;
+	if (!dbus_g_proxy_end_call(proxy, call, &error, DBUS_TYPE_G_HASH_TABLE_ARRAY, &arr, G_TYPE_INVALID))
 	{
 		/* Just do demonstrate remote exceptions versus regular GError */
 		if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
@@ -68,44 +66,22 @@ GPtrArray *GetLyricList(const gchar *title, const gchar *artist)
 		g_error_free (error);
 		exit (1);
 	}
-
-	return arr;
+	callback(arr);
 }
 
+DBusGProxyCall *pending_call = NULL;
 
-void thread_get_lyric_list(void *(*callback) (GPtrArray *))
+
+
+void GetLyricList_async(const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
 {
-	for (;;)
-	{
-		sleep(1);	
-		printf("test\n");
-	}
+	DBusGProxy *proxy = lz_dbus_get_proxy();
+	GError *error = NULL;
+	printf("???\n");
+	pending_call = dbus_g_proxy_begin_call (proxy, "GetLyricList", GetLyricList_async_callback, callback, NULL, G_TYPE_STRING, title, G_TYPE_STRING, artist, G_TYPE_STRING, "TEST", G_TYPE_INVALID);
+	printf("done\n");
+
 }
-
-pthread_t tid = 0;
-
-void lz_dbus_async(void *(*start_routine)(), void *(*callback) (GPtrArray *))
-{
-	pthread_create(&tid, NULL, start_routine, NULL);
-}
-
-void lz_dbus_kill()
-{
-	if (tid)
-	{
-		printf("going to kill %d\n", tid);
-		pthread_cancel(tid);
-		printf("done\n");
-		tid = 0;
-	}
-}
-
-void lz_get_lyric_list_async(const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
-{
-	
-}
-
-GetLyricList 
 
 
 GPtrArray *GetLyric(const gchar *url)
