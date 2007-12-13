@@ -8,6 +8,8 @@
 #include <glade/glade.h>
 #include "../gtk-lyricview/lyricview.h"
 
+#include <dlfcn.h>
+
 #define _
 
 static void lyric_init();
@@ -29,19 +31,7 @@ GeneralPlugin *lyric_gp[] = {&audaciouslyriczilla, NULL};
 SIMPLE_GENERAL_PLUGIN(lyriczilla, lyric_gp);
 
 GtkWidget *lyricwin, *lyricview;
-
-pid_t pid = 0;
-
 gchar *last_filename = NULL;
-
-
-gboolean auto_scroll = TRUE;
-
-gboolean enable_auto_scroll_again(gpointer data)
-{
-	auto_scroll = TRUE;
-	return FALSE;
-}
 
 void add_to_widget(gpointer data, gpointer user_data)
 {
@@ -65,6 +55,12 @@ void add_to_widget(gpointer data, gpointer user_data)
 
 int state = 0;
 
+void on_lyric_arrive(GPtrArray *result)
+{
+	g_ptr_array_foreach(result, add_to_widget, NULL);
+}
+
+
 void on_lyric_list_arrive(GPtrArray *result)
 {
 	if (!result)
@@ -76,11 +72,10 @@ void on_lyric_list_arrive(GPtrArray *result)
 		GHashTable *hash = (GHashTable *)result->pdata[0];
 		gchar *url = (gchar *) g_hash_table_lookup(hash, (gpointer) "url");
 		if (url)
-		{
-			GPtrArray *arr = GetLyric(url);
-			g_ptr_array_foreach(arr, add_to_widget, NULL);
-			
-		}
+			GetLyric_async(url, on_lyric_arrive);
+		else
+			lyricview_set_message((LyricView *)lyricview, _("Error while parse query result."));
+
 		state = 0;
 	}
 	else
@@ -93,7 +88,7 @@ void on_lyric_list_arrive(GPtrArray *result)
 gboolean on_timer(gpointer data)
 {
 	Playlist *playlist = aud_playlist_get_active();
-	if (auto_scroll && playlist)
+	if (playlist)
 	{
 		gint playlist_pos = aud_playlist_get_position(playlist);
 		
@@ -120,20 +115,19 @@ gboolean on_timer(gpointer data)
 			state = 1;
 			
 			GetLyricList_async(title, artist, on_lyric_list_arrive);
-
 		}
 
-		gint time = audacious_drct_get_time();//(playlist, playlist_pos);
+		gint time = audacious_drct_get_time();
+		printf("time is %d\n", time);
 		lyricview_set_current_time((LyricView *)lyricview, time);
 	}
 	return TRUE;
 }
 
-void win( GtkWidget *widget, gint time, gpointer data)
+static void on_lyricview_dragdrop( GtkWidget *widget, gint time, gpointer data)
 {
-	auto_scroll = FALSE;
+	time += 1000 - time % 1000;  // round up
 	audacious_drct_seek(time);
-	g_timeout_add(500, enable_auto_scroll_again, 0);
 }
 
 static GtkWidget *(*_ui_skinned_window_new)(const gchar *wmclass_name) = NULL;
@@ -144,7 +138,7 @@ static void lyric_init()
 	gtk_window_set_title((GtkWindow *) lyricwin, "LyricZilla");
 	gtk_widget_realize(lyricwin);
 	lyricview = lyricview_new();
-	g_signal_connect (G_OBJECT (lyricview), "time_change", G_CALLBACK (win), NULL);
+	g_signal_connect (G_OBJECT (lyricview), "time_change", G_CALLBACK (on_lyricview_dragdrop), NULL);
 
 	// make default colors
 	gdk_color_parse("black", &LYRIC_VIEW(lyricview)->colors.background);

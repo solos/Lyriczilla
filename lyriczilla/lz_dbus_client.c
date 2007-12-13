@@ -63,7 +63,6 @@ static void GetLyricList_async_callback(DBusGProxy *proxy, DBusGProxyCall *call,
 	callback(arr);
 }
 
-
 void GetLyricList_async(const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
 {
 	DBusGProxy *proxy = lz_dbus_get_proxy();
@@ -75,22 +74,17 @@ void GetLyricList_async(const gchar *title, const gchar *artist, void *(*callbac
 	pending_call = dbus_g_proxy_begin_call (proxy, "GetLyricList", GetLyricList_async_callback, callback, NULL, G_TYPE_STRING, title, G_TYPE_STRING, artist, G_TYPE_STRING, "TEST", G_TYPE_INVALID);
 }
 
-
-GPtrArray *GetLyric(const gchar *url)
+static void GetLyric_async_callback(DBusGProxy *proxy, DBusGProxyCall *call, void *(*callback) (GPtrArray *))
 {
-	DBusGProxy *proxy = lz_dbus_get_proxy();
-	
-	if (pending_call)
-		dbus_g_proxy_cancel_call(proxy, pending_call);
-		
-	GError *error = NULL;
-	GPtrArray *arr = NULL;
-	
 	GType inner = dbus_g_type_get_struct ("GValueArray", G_TYPE_INT, G_TYPE_STRING, G_TYPE_INVALID);
 	GType outer = dbus_g_type_get_collection("GPtrArray", inner);
+
+	GError *error = NULL;
+	pending_call = NULL;
+
+	GPtrArray *arr = NULL;
 	
-	if (!dbus_g_proxy_call (proxy, "GetLyric", &error, G_TYPE_STRING, url, G_TYPE_STRING, "TEST", G_TYPE_INVALID,
-				outer, &arr, G_TYPE_INVALID))
+	if (!dbus_g_proxy_end_call(proxy, call, &error, outer, &arr, G_TYPE_INVALID))
 	{
 		/* Just do demonstrate remote exceptions versus regular GError */
 		if (error->domain == DBUS_GERROR && error->code == DBUS_GERROR_REMOTE_EXCEPTION)
@@ -102,7 +96,20 @@ GPtrArray *GetLyric(const gchar *url)
 		g_error_free (error);
 //		exit (1);
 	}
-	return arr;
+	callback(arr);
 }
 
+
+GPtrArray *GetLyric_async(const gchar *url, void *(*callback) (GPtrArray *))
+{
+	DBusGProxy *proxy = lz_dbus_get_proxy();
+	
+	if (pending_call)
+		dbus_g_proxy_cancel_call(proxy, pending_call);
+		
+	GError *error = NULL;
+
+	
+	pending_call = dbus_g_proxy_begin_call(proxy, "GetLyric", GetLyric_async_callback, callback, NULL, G_TYPE_STRING, url, G_TYPE_STRING, "TEST", G_TYPE_INVALID);
+}
 

@@ -219,13 +219,13 @@ on_lyricview_button_press_event          (GtkWidget       *widget,
                                         gpointer         user_data)
 {
 	LyricView *lyricview = (LyricView *) widget;
-	if (event->button == 1)
+	if (event->button == 1) // left
 	{
-	        GValue value = {0};
-	        g_value_init(&value, G_TYPE_INT);
-	        gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "y", &value);
-	        lyricview->top = g_value_get_int(&value);
-	        gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "x", &value);        
+		GValue value = {0};
+		g_value_init(&value, G_TYPE_INT);
+		gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "y", &value);
+		lyricview->top = g_value_get_int(&value);
+		gtk_container_child_get_property((GtkContainer *) widget, lyricview->vbox, "x", &value);        
 		lyricview->left = g_value_get_int(&value);
 		lyricview->x = event->x;
 		lyricview->y = event->y;
@@ -278,6 +278,8 @@ on_lyricview_button_release_event        (GtkWidget       *widget,
 	if (previous != current)
 	{
 		int time = ((LyricItem *)current->data)->time;
+		// TODO: count the height of the label.
+		
 		g_signal_emit (G_OBJECT (widget), lyricview_signals[TIME_CHANGE_SIGNAL], 0, GINT_TO_POINTER(time));
 		lyricview_set_current_time((LyricView *)lyricview, time);
 	}
@@ -436,7 +438,7 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 		lyricview->current = current;
 
 	// set colors
-	int threshold = 300;
+	int threshold = 500;
 	GList *p;
 	for (p = list; p; p = p->next)
 	{
@@ -529,6 +531,9 @@ void lyricview_clear(LyricView *lyricview)
 	lyricview->ones = lyricview->current = NULL;
 	gtk_widget_hide(lyricview->vbox);
 	gtk_widget_show(lyricview->message_label);
+	
+	// invisible before next time change
+	gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, 100000000, 0);
 }
 
 
