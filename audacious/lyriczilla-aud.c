@@ -114,7 +114,7 @@ gboolean on_timer(gpointer data)
 		
 			state = 1;
 			
-			GetLyricList_async(title, artist, on_lyric_list_arrive);
+			GetLyricList_async(filename, title, artist, on_lyric_list_arrive);
 		}
 
 		gint time = audacious_drct_get_time();

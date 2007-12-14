@@ -29,29 +29,64 @@ import dbus.mainloop.glib
 import time
 import lz_core
 import urllib2
+import cPickle
+import md5
 
 class LyricZilla(dbus.service.Object):
 
 
 	@dbus.service.method("com.googlecode.lyriczilla.LyricZilla",
-		in_signature='ssb', out_signature='aa{ss}', async_callbacks=('_succ','_fail'))
+		in_signature='sss', out_signature='aa{ss}', async_callbacks=('_succ','_fail'))
 		
-	def GetLyricList(self, title, artist, force_load, _succ, _fail):
+	def GetLyricList(self, filename, title, artist, _succ, _fail):
+		
+		# check local files.
+		home_dir = os.environ['HOME']
+		
+		cache_filename = home_dir + '/' + md5.md5(filename).hexdigest() + '.list'
+		
+		l = []
 		try:
-			l = lz_core.get_lyric_list(title, artist)
+			l = (list) (cPickle.load(open(cache_filename)))
 			_succ(l)
 		except:
-			_fail(1)
+			try:
+				l = lz_core.get_lyric_list(title, artist)
+				_succ(l)
+				
+				try:
+					cPickle.dump(l, open(cache_filename, 'w'))
+				except:
+					pass
+			except:
+				_fail(1)
 				
 	@dbus.service.method("com.googlecode.lyriczilla.LyricZilla",
 		in_signature='sb', out_signature='a(is)', async_callbacks=('_succ','_fail'))
 			
 	def GetLyric(self, url, force_load, _succ, _fail):
+	
+		# check local files.
+		home_dir = os.environ['HOME']
+		
+		cache_filename = home_dir + '/' + md5.md5(url).hexdigest() + '.lyric'
+		print cache_filename
+
+		l = []
 		try:
-			l = lz_core.get_lyric(url)
+			l = (list) (cPickle.load(open(cache_filename)))
 			_succ(l)
 		except:
-			_fail(1)
+			try:
+				l = lz_core.get_lyric(url)
+				_succ(l)
+				
+				try:
+					cPickle.dump(l, open(cache_filename, 'w'))
+				except:
+					pass
+			except:
+				_fail(1)
 
 	@dbus.service.method("com.googlecode.lyriczilla.LyricZilla",
 		in_signature='', out_signature='a{ss}')
