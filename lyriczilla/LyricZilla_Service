@@ -80,8 +80,8 @@ class LyricZilla(dbus.service.Object):
 		
 		# if i found a local lrc file, load it first.
 		
-		files = (
-			home_dir + '/.lyriczilla/lyric/' + '%s - %s.lrc' % (title, artist),
+		#files = (
+		#	home_dir + '/.lyriczilla/lyric/' + '%s - %s.lrc' % (title, artist),
 			
 			
 		
@@ -111,7 +111,7 @@ class LyricZilla(dbus.service.Object):
 	def GetLyric(self, cacheable, url, _succ, _fail):
 		home_dir = os.environ['HOME']
 		
-		cache_filename = home_dir + '/.lyriczilla/cache/lyric/' + md5.md5(url).hexdigest() + '.lrc'
+		cache_filename = home_dir + '/.lyriczilla/cache/lyric/' + md5.md5(url.encode('utf-8')).hexdigest() + '.lrc'
 		
 		lrc_text = None
 		if cacheable:
