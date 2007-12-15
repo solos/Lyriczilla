@@ -6,7 +6,7 @@ import gettext
 from optparse import OptionParser
 from xml.dom import minidom
 from base64 import b64encode, b64decode
-import lz_lrctolist
+import cPickle
 
 def detect_charset(s):
 	charsets = ('iso-8859-1', 'gbk', 'utf-8')
@@ -16,7 +16,6 @@ def detect_charset(s):
 		except:
 			continue
 	return s
-
 
 def get_lyric_list(title, artist):
 
@@ -44,8 +43,6 @@ def get_lyric_list(title, artist):
 		
 	return ret
 	
-def get_lyric(url):
-	l = lz_lrctolist.lrctolist(urllib2.urlopen(urllib2.quote(url.encode('gbk'), ':/')).read().decode('gbk'))
-	return l
-	
+def get_lyric_source(url):
+	return urllib2.urlopen(urllib2.quote(url.encode('gbk'), ':/')).read().decode('gbk')
 	

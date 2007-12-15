@@ -63,7 +63,7 @@ static void GetLyricList_async_callback(DBusGProxy *proxy, DBusGProxyCall *call,
 	callback(arr);
 }
 
-void GetLyricList_async(const char *filename, const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
+void GetLyricList_async(gboolean cacheable, const char *filename, const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
 {
 	DBusGProxy *proxy = lz_dbus_get_proxy();
 	
@@ -71,7 +71,7 @@ void GetLyricList_async(const char *filename, const gchar *title, const gchar *a
 		dbus_g_proxy_cancel_call(proxy, pending_call);
 	
 	GError *error = NULL;
-	pending_call = dbus_g_proxy_begin_call (proxy, "GetLyricList", GetLyricList_async_callback, callback, NULL, G_TYPE_STRING, filename, G_TYPE_STRING, title, G_TYPE_STRING, artist, G_TYPE_INVALID);
+	pending_call = dbus_g_proxy_begin_call (proxy, "GetLyricList", (DBusGProxyCallNotify) GetLyricList_async_callback, callback, NULL, G_TYPE_BOOLEAN, cacheable, G_TYPE_STRING, filename, G_TYPE_STRING, title, G_TYPE_STRING, artist, G_TYPE_INVALID);
 }
 
 static void GetLyric_async_callback(DBusGProxy *proxy, DBusGProxyCall *call, void *(*callback) (GPtrArray *))
@@ -100,7 +100,7 @@ static void GetLyric_async_callback(DBusGProxy *proxy, DBusGProxyCall *call, voi
 }
 
 
-GPtrArray *GetLyric_async(const gchar *url, void *(*callback) (GPtrArray *))
+GPtrArray *GetLyric_async(gboolean cacheable, const gchar *url, void *(*callback) (GPtrArray *))
 {
 	DBusGProxy *proxy = lz_dbus_get_proxy();
 	
@@ -110,6 +110,6 @@ GPtrArray *GetLyric_async(const gchar *url, void *(*callback) (GPtrArray *))
 	GError *error = NULL;
 
 	
-	pending_call = dbus_g_proxy_begin_call(proxy, "GetLyric", GetLyric_async_callback, callback, NULL, G_TYPE_STRING, url, G_TYPE_STRING, "TEST", G_TYPE_INVALID);
+	pending_call = dbus_g_proxy_begin_call(proxy, "GetLyric", (DBusGProxyCallNotify) GetLyric_async_callback, callback, NULL, G_TYPE_BOOLEAN, cacheable, G_TYPE_STRING, url, G_TYPE_INVALID);
 }
 

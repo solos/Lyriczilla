@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <glib.h>
 #include <string.h>
-#include <glade/glade.h>
 #include "../gtk-lyricview/lyricview.h"
 
 #include <dlfcn.h>
@@ -21,7 +20,7 @@ gint timeout_id;
 
 static GeneralPlugin audaciouslyriczilla =
 {
- .description = "LyricZilla Plugin",
+ .description = _("LyricZilla Plugin"),
  .init = lyric_init,
  .about = lyric_about,
  .cleanup = lyric_cleanup
@@ -38,22 +37,10 @@ void add_to_widget(gpointer data, gpointer user_data)
 	GValueArray *valarr = (GValueArray *) data;
 	
 	int time = g_value_get_int(g_value_array_get_nth(valarr, 0));
-	char *text = g_value_get_string(g_value_array_get_nth(valarr, 1));
+	const char *text = g_value_get_string(g_value_array_get_nth(valarr, 1));
 	
-	printf("%d %s\n", time, text);
-	
-	lyricview_append_text(lyricview, time, text);
-	
-
-/*
-	GHashTable *hash = (GHashTable *)data;
-	gchar *title = (gchar *) g_hash_table_lookup(hash, (gpointer) "title");
-	if (title)
-		printf("%s\n", title);
-		*/
+	lyricview_append_text(LYRIC_VIEW(lyricview), time, text);
 }
-
-int state = 0;
 
 void on_lyric_arrive(GPtrArray *result)
 {
@@ -72,17 +59,14 @@ void on_lyric_list_arrive(GPtrArray *result)
 		GHashTable *hash = (GHashTable *)result->pdata[0];
 		gchar *url = (gchar *) g_hash_table_lookup(hash, (gpointer) "url");
 		if (url)
-			GetLyric_async(url, on_lyric_arrive);
+			GetLyric_async(TRUE, url, on_lyric_arrive);
 		else
 			lyricview_set_message((LyricView *)lyricview, _("Error while parse query result."));
-
-		state = 0;
 	}
 	else
 	{
 		lyricview_set_message((LyricView *)lyricview, _("Cannot found any lyric matching this song."));
-		state = 0;
-	}	
+	}
 }
 
 gboolean on_timer(gpointer data)
@@ -106,19 +90,18 @@ gboolean on_timer(gpointer data)
 			char *artist = (char *) aud_tuple_get_string(out, FIELD_ARTIST, NULL);
 			
 			printf("title artist: %s %s\n", title, artist);
+			
+			lyricview_set_meta_info(LYRIC_VIEW(lyricview), filename, title, artist);
 
-			lyricview_set_message((LyricView *)lyricview, _("Searching for lyrics..."));
+			lyricview_set_message(LYRIC_VIEW(lyricview), _("Searching for lyrics..."));
 
 			// clear the old lyric
 			lyricview_clear((LyricView *)lyricview);
 		
-			state = 1;
-			
-			GetLyricList_async(filename, title, artist, on_lyric_list_arrive);
+			GetLyricList_async(TRUE, filename, title, artist, on_lyric_list_arrive);
 		}
 
 		gint time = audacious_drct_get_time();
-		printf("time is %d\n", time);
 		lyricview_set_current_time((LyricView *)lyricview, time);
 	}
 	return TRUE;
