@@ -180,13 +180,46 @@ void on_button_find_clicked(GtkButton *button, gpointer user_data)
 	GetLyricList_async(FALSE, NULL, title, artist, on_search_lyric_list_arrive);
 }
 
+
+void add_to_widget(gpointer data, gpointer user_data);
+
+
+void on_search_lyric_arrive(GPtrArray *result)
+{
+	IMPORT_WIDGET(label_status);
+
+	on_lyric_arrive(result);
+	gtk_label_set_text(GTK_LABEL(label_status), "");	
+}
+
+
 void on_button_ok_clicked(GtkButton *button, gpointer user_data)
 {
 	IMPORT_WIDGET(label_status);
+	IMPORT_WIDGET(treeview_lyric);
 	
-	gtk_label_set_text(GTK_LABEL(label_status), _("Downloading..."));
-	printf("button ok\n");
+	GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview_lyric));
+	
+	int num = gtk_tree_selection_count_selected_rows(sel);
+	
+	printf("num = %d\n", num);
+	if (num == 1)
+	{
+		GtkTreeStore* store         = NULL;
+		GtkTreeIter iter            = {0};
+		GValue value                = {0};
+	
+		gtk_label_set_text(GTK_LABEL(label_status), _("Downloading..."));
+	
+		gtk_tree_selection_get_selected(sel, (GtkTreeModel**)&store, &iter);
 
+		gtk_tree_model_get_value(GTK_TREE_MODEL(store), &iter, 2, &value);
+
+		const char *url = g_value_get_string(&value);
+		
+		printf("url = %s\n", url);
+		GetLyric_async(TRUE, url, on_search_lyric_arrive);
+	}
 }
 
 void on_button_close_clicked(GtkButton *button, gpointer user_data)

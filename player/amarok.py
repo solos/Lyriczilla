@@ -1,18 +1,16 @@
+import lyriczilla.player
 import commands
 
-class amarok(lyriczilla.player):
-	def __init__():
-		pass
-		
-	def get_current_song():
-		title = commands.getoutput('dcop amarok player title')
-		artist = commands.getoutput('dcop amarok player artist')
-		filename = commands.getoutput('dcop amarok player path')
-		time = commands.getoutput('dcop amarok player trackCurrentTimeMs')
-
-		return ('title': title, 'artist': artist, 'filename': filename, 'time': time)
+def amarok_get_info():
+	(status, title) = commands.getstatusoutput('dcop amarok player title')
+	if status: return None
+	(status, artist) = commands.getstatusoutput('dcop amarok player artist')
+	if status: return None
+	(status, filename) = commands.getstatusoutput('dcop amarok player path')
+	if status: return None
+	(status, time) = commands.getstatusoutput('dcop amarok player trackCurrentTimeMs')
+	if status: return None
+	return {'title': title, 'artist': artist, 'filename': filename, 'time': time}
 	
-	
+lyriczilla.player.register('Amarok', amarok_get_info)
 
-def test():
-	print title, artist, filename, time

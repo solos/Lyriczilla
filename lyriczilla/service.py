@@ -17,10 +17,18 @@ def detect_charset(s):
 			continue
 	return s
 
-def get_lyric_list(title, artist):
+def remove_garbage_chars(s):
+	rall = range(0x30, 0x3a) + range(0x41, 0x5b) + range(0x61, 0x7b) + range(0x4e00, 0x9fa6)
+	t = ''
+	for ch in s:
+		if ord(ch) in rall:
+			t += ch
+	print s, t
+	return t
 
-	title_encode = urllib2.quote(detect_charset(title).encode('gbk').replace(' ', ''))
-	artist_encode = urllib2.quote(detect_charset(artist).encode('gbk').replace(' ',''))
+def get_lyric_list(title, artist):
+	title_encode = urllib2.quote(remove_garbage_chars(detect_charset(title)).encode('gbk'))
+	artist_encode = urllib2.quote(remove_garbage_chars(detect_charset(artist)).encode('gbk'))
 	url = 'http://www.winampcn.com/lyrictransfer/get.aspx?song=%s&artist=%s&lsong=%s&Datetime=20060601' % (title_encode, artist_encode, title_encode)
 	
 	xmltext = urllib2.urlopen(url).read()

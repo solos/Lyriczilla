@@ -28,8 +28,8 @@ import dbus
 import dbus.service
 import dbus.mainloop.glib
 import time
-import lz_core
-import lz_lrctolist
+import lyriczilla.service
+import lyriczilla.util
 import urllib2
 import cPickle
 import md5
@@ -95,7 +95,7 @@ class LyricZilla(dbus.service.Object):
 			_succ(l)
 		else:
 			try:
-				l = lz_core.get_lyric_list(title, artist)
+				l = lyriczilla.service.get_lyric_list(title, artist)
 				try:
 					self.__dump_object(l, cache_filename)
 				except Exception, e:
@@ -119,14 +119,14 @@ class LyricZilla(dbus.service.Object):
 			
 		if lrc_text == None:
 			try:
-				lrc_text = lz_core.get_lyric_source(url)
+				lrc_text = lyriczilla.service.get_lyric_source(url)
 				self.__dump_text(lrc_text, cache_filename)
 			except:
 				pass
 				
 		if lrc_text != None:
 			try:
-				l = lz_lrctolist.lrctolist(lrc_text)
+				l = lyriczilla.util.lrctolist(lrc_text)
 				_succ(l)
 			except:
 				_fail(1)
