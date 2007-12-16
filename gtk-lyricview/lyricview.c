@@ -162,12 +162,11 @@ void on_search_lyric_list_arrive(GPtrArray *result)
 			gtk_list_store_set(store, &iter, 0, title, 1, artist, 2, url, -1);
 			
 		}
+		gtk_label_set_text(GTK_LABEL(label_status), "");
 	}
 	else
 	{
-		printf("no answer\n");
-//		lyricview_set_message((LyricView *)lyricview, _("Cannot found any lyric matching this song."));
-//		state = 0;
+		gtk_label_set_text(GTK_LABEL(label_status), _("No results."));
 	}	
 }
 
@@ -176,6 +175,9 @@ void on_button_find_clicked(GtkButton *button, gpointer user_data)
 {
 	IMPORT_WIDGET(entry_title);
 	IMPORT_WIDGET(entry_artist);
+	IMPORT_WIDGET(label_status);
+	
+	gtk_label_set_text(GTK_LABEL(label_status), _("Searching..."));
 	
 	const char *title = gtk_entry_get_text(GTK_ENTRY(entry_title));
 	const char *artist = gtk_entry_get_text(GTK_ENTRY(entry_artist));
@@ -189,6 +191,12 @@ void on_button_ok_clicked(GtkButton *button, gpointer user_data)
 
 }
 
+void on_button_close_clicked(GtkButton *button, gpointer user_data)
+{
+	IMPORT_WIDGET(searchwin);
+	gtk_widget_hide(searchwin);
+}
+
 GtkWidget *get_widget(char *widgetname)
 {
 	static GladeXML *xml = NULL;
@@ -199,9 +207,12 @@ GtkWidget *get_widget(char *widgetname)
 		
 		
 #define CONNECT(signal_func) glade_xml_signal_connect(xml, #signal_func, (GCallback)(signal_func))
+		CONNECT(gtk_widget_hide_on_delete);
+
 		CONNECT(on_menu_search_activate);
 		CONNECT(on_button_find_clicked);
-		CONNECT(on_button_ok_clicked);		
+		CONNECT(on_button_ok_clicked);
+		CONNECT(on_button_close_clicked);
 #undef CONNECT		
 		
 		
