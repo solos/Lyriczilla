@@ -90,11 +90,6 @@ void on_menu_search_activate(GtkMenuItem *menuitem,
 	gtk_widget_show(get_widget("searchwin"));
 }
 
-void on_button_cancel_clicked()
-{
-}
-
-
 void treeview_lyric_add_header()
 {
 	static gboolean added = FALSE;
@@ -187,6 +182,9 @@ void on_button_find_clicked(GtkButton *button, gpointer user_data)
 
 void on_button_ok_clicked(GtkButton *button, gpointer user_data)
 {
+	IMPORT_WIDGET(label_status);
+	
+	gtk_label_set_text(GTK_LABEL(label_status), _("Downloading..."));
 	printf("button ok\n");
 
 }

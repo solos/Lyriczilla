@@ -65,7 +65,7 @@ void on_lyric_list_arrive(GPtrArray *result)
 	}
 	else
 	{
-		lyricview_set_message((LyricView *)lyricview, _("Cannot found any lyric matching this song."));
+		lyricview_set_message((LyricView *)lyricview, _("No lyrics found."));
 	}
 }
 
