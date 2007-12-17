@@ -49,5 +49,6 @@ AC_TYPE_SIZE_T
 AC_CONFIG_FILES([Makefile
                  data/Makefile
                  lyriczilla/Makefile
-                 audacious/Makefile])
+                 audacious/Makefile
+                 nest/Makefile])
 AC_OUTPUT
