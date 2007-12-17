@@ -527,7 +527,8 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 				int time_next = ((LyricItem *)current->next->data)->time;
 				int width = GTK_WIDGET(((LyricItem *)current->next->data)->label)->allocation.x -
 					GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.x;
-				newx -= width * (time - time_current) / (time_next - time_current);
+				if (time_next != time_current)					
+					newx -= width * (time - time_current) / (time_next - time_current);
 				newx += width / 2;
 			}
 			gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, newx, 0);
@@ -544,7 +545,8 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 				int time_next = ((LyricItem *)current->next->data)->time;
 				int height = GTK_WIDGET(((LyricItem *)current->next->data)->label)->allocation.y -
 					GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.y;
-				newy -= height * (time - time_current) / (time_next - time_current);
+				if (time_next != time_current)
+					newy -= height * (time - time_current) / (time_next - time_current);
 				newy += height / 2;
 			}
 			gtk_layout_move((GtkLayout *) lyricview, lyricview->vbox, 0, newy);

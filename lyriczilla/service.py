@@ -23,7 +23,6 @@ def remove_garbage_chars(s):
 	for ch in s:
 		if ord(ch) in rall:
 			t += ch
-	print s, t
 	return t
 
 def get_lyric_list(title, artist):
