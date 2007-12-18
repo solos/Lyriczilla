@@ -1,7 +1,9 @@
 import lyriczilla.player
+import lyriczilla.util
 import dbus
 
 def rhythmbox_get_info():
+	if not lyriczilla.util.dbus_name_running('org.gnome.Rhythmbox'): return None
 	try:
 		bus = dbus.SessionBus()
 		player = dbus.Interface(bus.get_object('org.gnome.Rhythmbox', '/org/gnome/Rhythmbox/Player'), 'org.gnome.Rhythmbox.Player')

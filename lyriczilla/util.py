@@ -5,6 +5,13 @@ import re
 from re import findall
 from string import replace, lower
 from xml.dom import minidom
+import dbus
+
+def dbus_name_running(name):
+	try:
+		return name in dbus.SessionBus().get_object('org.freedesktop.DBus', '/').ListNames()
+	except:
+		return False
 
 def lrctolist(lrc):
 	#pattern = '\[(?P<type>.*?):(?P<value>.*?)\](?P<tail>.*)'

@@ -1,28 +1,26 @@
-        
-        <oaf_info>
-        <oaf_server iid="OAFIID:LyricZilla_Applet_Factory"
-                    type="exe" location="/usr/bin/lyriczilla-applet">
+<oaf_info>
+	<oaf_server iid="OAFIID:LyricZilla_Applet_Factory" type="exe" location="/usr/bin/lyriczilla-applet.py">
 
-                <oaf_attribute name="repo_ids" type="stringv">
-                        <item value="IDL:Bonobo/GenericFactory:1.0"/>
-                        <item value="IDL:Bonobo/Unknown:1.0"/>
-                </oaf_attribute>
-                <oaf_attribute name="name" type="string" value="LyricZilla Applet Factory"/>
-                <oaf_attribute name="description" type="string" value="LyricZilla server factory"/>
-        </oaf_server>
+		<oaf_attribute name="repo_ids" type="stringv">
+			<item value="IDL:Bonobo/GenericFactory:1.0"/>
+			<item value="IDL:Bonobo/Unknown:1.0"/>
+		</oaf_attribute>
+		<oaf_attribute name="name" type="string" value="LyricZilla Applet Factory"/>
+		<oaf_attribute name="description" type="string" value="LyricZilla server factory"/>
+	</oaf_server>
 
-        <oaf_server iid="OAFIID:LyricZilla_Applet"
-                    type="factory" location="OAFIID:LyricZilla_Applet_Factory">
+	<oaf_server iid="OAFIID:LyricZilla_Applet" type="factory" location="OAFIID:LyricZilla_Applet_Factory">
 
-                <oaf_attribute name="repo_ids" type="stringv">
-                        <item value="IDL:GNOME/Vertigo/PanelAppletShell:1.0"/>
-                        <item value="IDL:Bonobo/Control:1.0"/>
-                        <item value="IDL:Bonobo/Unknown:1.0"/>
-                </oaf_attribute>
-                <oaf_attribute name="name" type="string" value="LyricZilla Applet"/>
-                <oaf_attribute name="description" type="string" value="Show the lyric on the panel"/>
-                <oaf_attribute name="description-zh_CN" type="string" value="在面板上显示歌词"/>
-                <oaf_attribute name="panel:category" type="string" value="Accessories"/>
-                <oaf_attribute name="panel:icon" type="string" value="tomboy.png"/>
-        </oaf_server>
-        </oaf_info>
+		<oaf_attribute name="repo_ids" type="stringv">
+			<item value="IDL:GNOME/Vertigo/PanelAppletShell:1.0"/>
+			<item value="IDL:Bonobo/Control:1.0"/>
+			<item value="IDL:Bonobo/Unknown:1.0"/>
+		</oaf_attribute>
+		<oaf_attribute name="name" type="string" value="LyricZilla Applet"/>
+		<oaf_attribute name="description" type="string" value="Show the lyric on the panel"/>
+		<oaf_attribute name="description-zh_CN" type="string" value="在面板上显示歌词"/>
+		<oaf_attribute name="panel:category" type="string" value="Accessories"/>
+		<oaf_attribute name="panel:icon" type="string" value="lyriczilla.png"/>
+	</oaf_server>
+</oaf_info>
+

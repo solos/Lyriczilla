@@ -1,3 +1,3 @@
-SUBDIRS = data lyriczilla audacious nest
+SUBDIRS = data lyriczilla audacious gnomeapplet nest
 dist_doc_DATA = COPYING README
 

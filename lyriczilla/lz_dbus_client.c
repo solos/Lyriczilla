@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-DBusGProxy *lz_dbus_get_proxy()
+DBusGProxy *lz_dbus_get_service_proxy()
 {
 	DBusGConnection *connection;
 	GError *error;
@@ -17,12 +17,10 @@ DBusGProxy *lz_dbus_get_proxy()
 		g_type_init ();
 
 		error = NULL;
-		connection = dbus_g_bus_get (DBUS_BUS_SESSION,
-				&error);
+		connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
 		if (connection == NULL)
 		{
-			g_printerr ("Failed to open connection to bus: %s\n",
-					error->message);
+			g_printerr ("Failed to open connection to bus: %s\n", error->message);
 			g_error_free (error);
 			exit (1);
 		}
@@ -32,6 +30,35 @@ DBusGProxy *lz_dbus_get_proxy()
 				"com.googlecode.LyricZilla",
 				"/com/googlecode/LyricZilla",
 				"com.googlecode.LyricZilla.Service");
+	}
+	return proxy;
+}
+
+
+DBusGProxy *lz_dbus_get_player_proxy()
+{
+	DBusGConnection *connection;
+	GError *error;
+	static DBusGProxy *proxy = NULL;
+
+	if (proxy == NULL)
+	{
+		g_type_init ();
+
+		error = NULL;
+		connection = dbus_g_bus_get (DBUS_BUS_SESSION, &error);
+		if (connection == NULL)
+		{
+			g_printerr ("Failed to open connection to bus: %s\n", error->message);
+			g_error_free (error);
+			exit (1);
+		}
+
+		/* Create a proxy object for the "bus driver" */
+		proxy = dbus_g_proxy_new_for_name (connection,
+				"com.googlecode.LyricZilla",
+				"/com/googlecode/LyricZilla",
+				"com.googlecode.LyricZilla.Player");
 	}
 	return proxy;
 }
@@ -65,7 +92,7 @@ static void GetLyricList_async_callback(DBusGProxy *proxy, DBusGProxyCall *call,
 
 void GetLyricList_async(gboolean cacheable, const char *filename, const gchar *title, const gchar *artist, void *(*callback) (GPtrArray *))
 {
-	DBusGProxy *proxy = lz_dbus_get_proxy();
+	DBusGProxy *proxy = lz_dbus_get_service_proxy();
 	
 	if (pending_call)
 		dbus_g_proxy_cancel_call(proxy, pending_call);
@@ -100,9 +127,9 @@ static void GetLyric_async_callback(DBusGProxy *proxy, DBusGProxyCall *call, voi
 }
 
 
-GPtrArray *GetLyric_async(gboolean cacheable, const gchar *url, void *(*callback) (GPtrArray *))
+void GetLyric_async(gboolean cacheable, const gchar *url, void *(*callback) (GPtrArray *))
 {
-	DBusGProxy *proxy = lz_dbus_get_proxy();
+	DBusGProxy *proxy = lz_dbus_get_service_proxy();
 	
 	if (pending_call)
 		dbus_g_proxy_cancel_call(proxy, pending_call);
@@ -112,4 +139,21 @@ GPtrArray *GetLyric_async(gboolean cacheable, const gchar *url, void *(*callback
 	
 	pending_call = dbus_g_proxy_begin_call(proxy, "GetLyric", (DBusGProxyCallNotify) GetLyric_async_callback, callback, NULL, G_TYPE_BOOLEAN, cacheable, G_TYPE_STRING, url, G_TYPE_INVALID);
 }
+
+
+GHashTable *Player_GetInfo()
+{
+	DBusGProxy *proxy = lz_dbus_get_player_proxy();
+	
+	GError *error = NULL;
+	GHashTable *ht = NULL;
+	
+	if (!dbus_g_proxy_call(proxy, "GetInfo", &error, G_TYPE_INVALID, DBUS_TYPE_G_STRING_STRING_HASHTABLE, &ht, G_TYPE_INVALID))
+	{
+//		printf("error\n");
+//		g_printerr ("Error: %s\n", error->message);
+	}
+	return ht;
+}
+
 

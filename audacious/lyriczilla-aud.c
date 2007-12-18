@@ -7,7 +7,7 @@
 #include <string.h>
 #include "../gtk-lyricview/lyricview.h"
 
-#include <dlfcn.h>
+#include <libmcs/mcs.h>
 
 #define _
 
@@ -181,6 +181,81 @@ lyricwin_release(GtkWidget * widget,
        aud_dock_move_release(GTK_WINDOW(lyricwin));
 }
 
+void load_settings(LyricView *lyricview, const char *profile)
+{
+	printf("about to load %s\n", profile);
+	mcs_handle_t *mcs;
+//	mcs_init();
+	
+	mcs = mcs_new("lyriczilla");
+
+	char *font_desc = "Sans 12";
+	
+	mcs_get_string(mcs, profile, "font", &font_desc);
+	printf("font is %s\n", font_desc);
+	
+	LyricViewColors colors;
+
+	char *colorstr;
+
+	colorstr = "black";
+	mcs_get_string(mcs, profile, "color_background", &colorstr);
+	gdk_color_parse(colorstr, &colors.background);
+	
+	colorstr = "blue";
+	mcs_get_string(mcs, profile, "color_normal", &colorstr);
+	gdk_color_parse(colorstr, &colors.normal);
+	
+	colorstr = "white";
+	mcs_get_string(mcs, profile, "color_current", &colorstr);
+	gdk_color_parse(colorstr, &colors.current);
+	
+	colorstr = "yellow";
+	mcs_get_string(mcs, profile, "color_messages", &colorstr);
+	gdk_color_parse(colorstr, &colors.messages);
+	mcs_destroy(mcs);
+//	mcs_fini();
+
+	lyricview_set_style(lyricview, font_desc, &colors);
+}
+
+
+void save_settings(LyricView *lyricview, const char *profile)
+{
+	printf("about to save %s\n", profile);
+	mcs_handle_t *mcs;
+//	mcs_init();
+	
+	mcs = mcs_new("lyriczilla");
+	
+	char *font_desc = pango_font_description_to_string(lyricview->font);
+	printf("font is %s\n", font_desc);
+	mcs_set_string(mcs, profile, "font", font_desc);
+	g_free(font_desc);
+	
+	LyricViewColors colors;
+	
+	const char *colorstr;
+	
+	gdk_color_to_string(&lyricview->colors.background);
+	mcs_set_string(mcs, profile, "color_background", colorstr);
+	gdk_color_to_string(&lyricview->colors.normal);
+	mcs_set_string(mcs, profile, "color_normal", colorstr);
+	gdk_color_to_string(&lyricview->colors.current);
+	mcs_set_string(mcs, profile, "color_current", colorstr);
+	gdk_color_to_string(&lyricview->colors.messages);
+	mcs_set_string(mcs, profile, "color_messages", colorstr);
+	
+	mcs_destroy(mcs);
+	
+//	mcs_fini();
+}
+
+gboolean on_timer_save_settings()
+{
+	save_settings(lyricview, "audacious");
+	return TRUE;
+}
 
 gboolean on_timer_create_lyricwin()
 {
@@ -237,9 +312,12 @@ gboolean on_timer_create_lyricwin()
 //	gtk_window_set_skip_taskbar_hint(GTK_WINDOW(lyricwin), TRUE);
 //	gtk_window_set_deletable(GTK_WINDOW(lyricwin), FALSE);
 
+	load_settings(lyricview, "audacious");
+
 	gtk_widget_show(lyricwin);
 	
 	timeout_id = g_timeout_add(50, on_timer, 0);
+	g_timeout_add(2000, on_timer_save_settings, 0);
 	return FALSE;
 }
 
@@ -272,7 +350,7 @@ static void lyric_about()
 	gtk_show_about_dialog (NULL,
 			"name", "LyricZilla",
 			//			"copyright", copyright,
-			"comments", "Lyric",
+//			"comments", "Lyric",
 			"version", VERSION,
 			"authors", authors,
 			"license", license_text,

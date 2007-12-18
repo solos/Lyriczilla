@@ -40,6 +40,7 @@ def __scan():
 def get_info():
 	for player in players:
 		info = player[1]()
-		if info != None: return info
+		if info != None:
+			return info
 	return None
 

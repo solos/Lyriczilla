@@ -30,6 +30,7 @@ import dbus.mainloop.glib
 import time
 import lyriczilla.service
 import lyriczilla.util
+import lyriczilla.player
 import urllib2
 import cPickle
 import md5
@@ -139,9 +140,16 @@ class LyricZilla(dbus.service.Object):
 
 	@dbus.service.method("com.googlecode.LyricZilla.Player",
 		in_signature='', out_signature='a{ss}')
-	def GetCurrentPlaying(self):
-		'''Get the information of currently playing song. Should not be called inside a plugin of a player'''
-		return {'status': 'playing', 'title': 'xx', 'artist': 'xx', 'filename': '/home/lqs/test.ogg', 'time': '1000'}
+	def GetInfo(self):
+		info = lyriczilla.player.get_info()
+		if info != None:
+			enc = 'utf-8'
+			return {
+				'title': str(info['title'].encode(enc)),
+				'artist': str(info['artist'].encode(enc)),
+				'time': str(info['time']),
+				'uri': str(info['uri'].encode(enc)),
+			}
 
 
 if __name__ == '__main__':
@@ -154,6 +162,9 @@ if __name__ == '__main__':
 
 	mainloop = gobject.MainLoop()
 	print 'Running LyricZilla service.'
+	
+	lyriczilla.player.__scan()
+	
 	mainloop.run()
 
 
