@@ -44,6 +44,7 @@ struct _LyricView
 	gint top, left, x, y;
 	gboolean dragging;
 	LyricViewColors colors;
+	PangoFontDescription *font;
 	gboolean horizontal;
 };
 
@@ -62,6 +63,7 @@ void lyricview_append_text(LyricView *, gint time, const gchar *text);
 void lyricview_set_current_time(LyricView *, gint time);
 void lyricview_clear(LyricView *);
 void lyricview_overall_adjust_by(LyricView *, gint);
+void lyricview_set_style(LyricView *widget, const char *font_desc, const LyricViewColors *colors);
 
 #ifdef __cplusplus
 }

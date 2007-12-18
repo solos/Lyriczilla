@@ -29,9 +29,9 @@ DBusGProxy *lz_dbus_get_proxy()
 
 		/* Create a proxy object for the "bus driver" */
 		proxy = dbus_g_proxy_new_for_name (connection,
-				"com.googlecode.lyriczilla",
-				"/LyricZilla",
-				"com.googlecode.lyriczilla.LyricZilla");
+				"com.googlecode.LyricZilla",
+				"/com/googlecode/LyricZilla",
+				"com.googlecode.LyricZilla.Service");
 	}
 	return proxy;
 }

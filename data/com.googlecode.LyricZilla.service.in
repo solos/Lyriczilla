@@ -1,4 +1,4 @@
 [D-BUS Service]
-Name=com.googlecode.lyriczilla
+Name=com.googlecode.LyricZilla
 Exec=__bindir__/LyricZilla_Daemon
 

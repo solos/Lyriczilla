@@ -20,9 +20,15 @@ def detect_charset(s):
 def remove_garbage_chars(s):
 	rall = range(0x30, 0x3a) + range(0x41, 0x5b) + range(0x61, 0x7b) + range(0x4e00, 0x9fa6)
 	t = ''
+	nest = 0
 	for ch in s:
-		if ord(ch) in rall:
+		if ord(ch) in rall and nest == 0:
 			t += ch
+		elif ch == '(':
+			nest += 1
+		elif ch == ')':
+			nest -= 1
+		
 	return t
 
 def get_lyric_list(title, artist):

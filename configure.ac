@@ -28,9 +28,9 @@ AC_PROG_MAKE_SET
 #AC_CHECK_LIB([pthread], [pthread_create], , [AC_ERROR(pthread is required.)])
 
 # Checks for libraries.
-PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.12.3, , [AC_ERROR(GTK+ (>=2.12.3) is required.)])
-PKG_CHECK_MODULES(dbus, dbus-1 >= 1.1.2, , [AC_ERROR(dbus (>=1.1.2) is required.)])
-PKG_CHECK_MODULES(dbus_glib, dbus-glib-1 >= 0.74, , [AC_ERROR(dbus-glib (>=0.74) is required.)])
+PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.10, , [AC_ERROR(GTK+ (>=2.10) is required.)])
+PKG_CHECK_MODULES(dbus, dbus-1 >= 1.0, , [AC_ERROR(dbus (>=1.0) is required.)])
+PKG_CHECK_MODULES(dbus_glib, dbus-glib-1, , [AC_ERROR(dbus-glib is required.)])
 PKG_CHECK_MODULES(audacious, audacious >= 1.4.2, , [AC_ERROR(audacious (>=1.4.3) is required.)])
 
 

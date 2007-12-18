@@ -3599,12 +3599,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_GTK_CFLAGS="$GTK_CFLAGS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.12.3\"") >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.12.3") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.10\"") >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.10") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.12.3" 2>/dev/null`
+  pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.10" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -3617,12 +3617,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_GTK_LIBS="$GTK_LIBS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.12.3\"") >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.12.3") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.10\"") >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.10") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.12.3" 2>/dev/null`
+  pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.10" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -3641,21 +3641,21 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "gtk+-2.0 >= 2.12.3"`
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "gtk+-2.0 >= 2.10"`
         else
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "gtk+-2.0 >= 2.12.3"`
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "gtk+-2.0 >= 2.10"`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK_PKG_ERRORS" >&5
 
 	{ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
-                { { echo "$as_me:$LINENO: error: GTK+ (>=2.12.3) is required." >&5
-echo "$as_me: error: GTK+ (>=2.12.3) is required." >&2;}
+                { { echo "$as_me:$LINENO: error: GTK+ (>=2.10) is required." >&5
+echo "$as_me: error: GTK+ (>=2.10) is required." >&2;}
    { (exit 1); exit 1; }; }
 elif test $pkg_failed = untried; then
-	{ { echo "$as_me:$LINENO: error: GTK+ (>=2.12.3) is required." >&5
-echo "$as_me: error: GTK+ (>=2.12.3) is required." >&2;}
+	{ { echo "$as_me:$LINENO: error: GTK+ (>=2.10) is required." >&5
+echo "$as_me: error: GTK+ (>=2.10) is required." >&2;}
    { (exit 1); exit 1; }; }
 else
 	GTK_CFLAGS=$pkg_cv_GTK_CFLAGS
@@ -3674,12 +3674,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_dbus_CFLAGS="$dbus_CFLAGS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-1 >= 1.1.2\"") >&5
-  ($PKG_CONFIG --exists --print-errors "dbus-1 >= 1.1.2") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-1 >= 1.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "dbus-1 >= 1.0") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_dbus_CFLAGS=`$PKG_CONFIG --cflags "dbus-1 >= 1.1.2" 2>/dev/null`
+  pkg_cv_dbus_CFLAGS=`$PKG_CONFIG --cflags "dbus-1 >= 1.0" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -3692,12 +3692,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_dbus_LIBS="$dbus_LIBS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-1 >= 1.1.2\"") >&5
-  ($PKG_CONFIG --exists --print-errors "dbus-1 >= 1.1.2") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-1 >= 1.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "dbus-1 >= 1.0") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_dbus_LIBS=`$PKG_CONFIG --libs "dbus-1 >= 1.1.2" 2>/dev/null`
+  pkg_cv_dbus_LIBS=`$PKG_CONFIG --libs "dbus-1 >= 1.0" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -3716,21 +3716,21 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        dbus_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "dbus-1 >= 1.1.2"`
+	        dbus_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "dbus-1 >= 1.0"`
         else
-	        dbus_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "dbus-1 >= 1.1.2"`
+	        dbus_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "dbus-1 >= 1.0"`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$dbus_PKG_ERRORS" >&5
 
 	{ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
-                { { echo "$as_me:$LINENO: error: dbus (>=1.1.2) is required." >&5
-echo "$as_me: error: dbus (>=1.1.2) is required." >&2;}
+                { { echo "$as_me:$LINENO: error: dbus (>=1.0) is required." >&5
+echo "$as_me: error: dbus (>=1.0) is required." >&2;}
    { (exit 1); exit 1; }; }
 elif test $pkg_failed = untried; then
-	{ { echo "$as_me:$LINENO: error: dbus (>=1.1.2) is required." >&5
-echo "$as_me: error: dbus (>=1.1.2) is required." >&2;}
+	{ { echo "$as_me:$LINENO: error: dbus (>=1.0) is required." >&5
+echo "$as_me: error: dbus (>=1.0) is required." >&2;}
    { (exit 1); exit 1; }; }
 else
 	dbus_CFLAGS=$pkg_cv_dbus_CFLAGS
@@ -3749,12 +3749,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_dbus_glib_CFLAGS="$dbus_glib_CFLAGS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-glib-1 >= 0.74\"") >&5
-  ($PKG_CONFIG --exists --print-errors "dbus-glib-1 >= 0.74") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-glib-1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "dbus-glib-1") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_dbus_glib_CFLAGS=`$PKG_CONFIG --cflags "dbus-glib-1 >= 0.74" 2>/dev/null`
+  pkg_cv_dbus_glib_CFLAGS=`$PKG_CONFIG --cflags "dbus-glib-1" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -3767,12 +3767,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_dbus_glib_LIBS="$dbus_glib_LIBS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-glib-1 >= 0.74\"") >&5
-  ($PKG_CONFIG --exists --print-errors "dbus-glib-1 >= 0.74") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"dbus-glib-1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "dbus-glib-1") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_dbus_glib_LIBS=`$PKG_CONFIG --libs "dbus-glib-1 >= 0.74" 2>/dev/null`
+  pkg_cv_dbus_glib_LIBS=`$PKG_CONFIG --libs "dbus-glib-1" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -3791,21 +3791,21 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        dbus_glib_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "dbus-glib-1 >= 0.74"`
+	        dbus_glib_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "dbus-glib-1"`
         else
-	        dbus_glib_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "dbus-glib-1 >= 0.74"`
+	        dbus_glib_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "dbus-glib-1"`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$dbus_glib_PKG_ERRORS" >&5
 
 	{ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
-                { { echo "$as_me:$LINENO: error: dbus-glib (>=0.74) is required." >&5
-echo "$as_me: error: dbus-glib (>=0.74) is required." >&2;}
+                { { echo "$as_me:$LINENO: error: dbus-glib is required." >&5
+echo "$as_me: error: dbus-glib is required." >&2;}
    { (exit 1); exit 1; }; }
 elif test $pkg_failed = untried; then
-	{ { echo "$as_me:$LINENO: error: dbus-glib (>=0.74) is required." >&5
-echo "$as_me: error: dbus-glib (>=0.74) is required." >&2;}
+	{ { echo "$as_me:$LINENO: error: dbus-glib is required." >&5
+echo "$as_me: error: dbus-glib is required." >&2;}
    { (exit 1); exit 1; }; }
 else
 	dbus_glib_CFLAGS=$pkg_cv_dbus_glib_CFLAGS

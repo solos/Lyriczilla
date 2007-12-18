@@ -1,4 +1,4 @@
-
+#include <string.h>
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 #include "lyricview.h"
@@ -84,10 +84,14 @@ GtkWidget *get_widget(char *widgetname);
 #define IMPORT_WIDGET(widget) GtkWidget *widget = get_widget(#widget)
 
 
-void on_menu_search_activate(GtkMenuItem *menuitem,
-                                                        gpointer     user_data)
+void on_menu_search_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	gtk_widget_show(get_widget("searchwin"));
+}
+
+void on_menu_prefs_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+	gtk_widget_show(get_widget("prefswin"));
 }
 
 void treeview_lyric_add_header()
@@ -130,7 +134,7 @@ void on_search_lyric_list_arrive(GPtrArray *result)
 	IMPORT_WIDGET(treeview_lyric);
 	if (!result)
 	{
-		gtk_label_set_text(GTK_LABEL(label_status), _("Error while querying lyric list."));
+		gtk_label_set_text(GTK_LABEL(label_status), _("Error while searching lyrics."));
 	}
 	else if (result->len > 0)
 	{
@@ -218,14 +222,35 @@ void on_button_ok_clicked(GtkButton *button, gpointer user_data)
 		const char *url = g_value_get_string(&value);
 		
 		printf("url = %s\n", url);
-		GetLyric_async(TRUE, url, on_search_lyric_arrive);
+		GetLyric_async(FALSE, url, on_search_lyric_arrive);
 	}
 }
 
-void on_button_close_clicked(GtkButton *button, gpointer user_data)
+static void on_button_close_clicked(GtkButton *button, gpointer user_data)
 {
 	IMPORT_WIDGET(searchwin);
 	gtk_widget_hide(searchwin);
+}
+
+static void on_button_prefswin_close_clicked(GtkButton *button, gpointer user_data)
+{
+	IMPORT_WIDGET(prefswin);
+	gtk_widget_hide(prefswin);
+}
+
+static void on_prefswin_realize(GtkWidget *widget, gpointer user_data)
+{
+	IMPORT_WIDGET(font_lyric);
+	gtk_font_button_set_font_name(font_lyric, "Monospace 14");
+	printf("prefs!!\n");
+//	on_font_lyric_font_set
+
+}
+
+static void on_font_lyric_font_set(GtkFontButton *widget, gpointer user_data)
+{
+	extern LyricView *lyricview;
+	lyricview_set_style(lyricview, gtk_font_button_get_font_name(widget), NULL);
 }
 
 GtkWidget *get_widget(char *widgetname)
@@ -239,8 +264,11 @@ GtkWidget *get_widget(char *widgetname)
 		
 #define CONNECT(signal_func) glade_xml_signal_connect(xml, #signal_func, (GCallback)(signal_func))
 		CONNECT(gtk_widget_hide_on_delete);
-
+		CONNECT(on_button_prefswin_close_clicked);
+		CONNECT(on_font_lyric_font_set);
+		CONNECT(on_prefswin_realize);
 		CONNECT(on_menu_search_activate);
+		CONNECT(on_menu_prefs_activate);
 		CONNECT(on_button_find_clicked);
 		CONNECT(on_button_ok_clicked);
 		CONNECT(on_button_close_clicked);
@@ -380,6 +408,7 @@ static void lyricview_init (LyricView *ttt)
 	gtk_widget_show(ttt->vbox);
 	gtk_layout_put(GTK_LAYOUT(ttt), ttt->vbox, 0, 0);
 	ttt->message_label = gtk_label_new(NULL);
+	
 	GdkColor color;
 	gdk_color_parse("red", &color);
 	gtk_widget_modify_fg(ttt->message_label, GTK_STATE_NORMAL, &color);
@@ -388,7 +417,11 @@ static void lyricview_init (LyricView *ttt)
 
 	ttt->ones = NULL;
 	ttt->current = NULL;
-
+	
+	ttt->font = pango_font_description_from_string("Sans 12");
+	
+	gtk_widget_modify_font(ttt->message_label, ttt->font);
+	
 	ttt->dragging = FALSE;
 
 
@@ -436,6 +469,8 @@ void lyricview_append_text(LyricView *lyricview, gint time, const gchar *text)
 	item->time = time;
 	item->text = g_strdup(text);
 	item->label = gtk_label_new(item->text);
+	gtk_widget_modify_font(item->label, lyricview->font);
+
 	item->process_color = FALSE;
 	gtk_widget_modify_fg(item->label, GTK_STATE_NORMAL, &lyricview->colors.normal);
 
@@ -584,6 +619,32 @@ void lyricview_overall_adjust_by(LyricView *widget, gint time)
 		((LyricItem *)list->data)->time += time;
 		list = list->next;
 	}
+}
+
+static void lyricview_reload_style(LyricView *widget)
+{
+	GList *list = widget->ones;
+	printf("reload!!\n");
+	while (list)
+	{
+		LyricItem *item = (LyricItem *) list->data;
+		gtk_widget_modify_font(item->label, widget->font);
+		list = list->next;	
+	}
+	printf("done\n");
+}
+
+void lyricview_set_style(LyricView *widget, const char *font_desc, const LyricViewColors *colors)
+{
+	if (font_desc)
+	{
+		pango_font_description_free(widget->font);
+		widget->font = pango_font_description_from_string(font_desc);
+		printf("%p %s\n", widget->font, font_desc);
+	}
+	if (colors)
+		memcpy(&widget->colors, colors, sizeof(LyricViewColors));
+	lyricview_reload_style(widget);	
 }
 
 // TODO: this function should be moved to another file.
