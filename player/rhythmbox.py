@@ -12,7 +12,7 @@ def rhythmbox_get_info():
 		uri =  player.getPlayingUri()
 		info = shell.getSongProperties(uri)
 
-		return {'title': info['title'], 'artist': info['artist'], 'filename': uri, 'time': player.getElapsed()}
+		return {'title': info['title'], 'artist': info['artist'], 'uri': uri, 'time': player.getElapsed() * 1000}
 	except:
 		return None
 	

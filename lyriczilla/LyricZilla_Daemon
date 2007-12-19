@@ -39,7 +39,6 @@ class LyricZilla(dbus.service.Object):
 
 
 	def __dump_object(self, obj, filename):
-		print 'dump', filename
 		try:
 			os.makedirs(os.path.dirname(filename))
 		except:
@@ -57,7 +56,6 @@ class LyricZilla(dbus.service.Object):
 
 
 	def __dump_text(self, text, filename):
-		print 'dump text to', filename
 		try:
 			os.makedirs(os.path.dirname(filename))
 		except:
@@ -65,7 +63,7 @@ class LyricZilla(dbus.service.Object):
 		try:
 			open(filename, 'w').write(text.encode('utf-8'))
 		except Exception, e:
-			print e
+			pass
 
 	def __load_text(self, filename):
 		try:
@@ -79,7 +77,6 @@ class LyricZilla(dbus.service.Object):
 	def GetLyricList(self, cacheable, filename, title, artist, _succ, _fail):
 		home_dir = os.environ['HOME']
 		
-		print 'for ', filename
 		# if i found a local lrc file, load it first.
 		
 		#files = (
@@ -88,25 +85,18 @@ class LyricZilla(dbus.service.Object):
 			
 		
 		cache_filename = home_dir + '/.lyriczilla/cache/list/%s - %s.list' % (artist, title)
-		print 'cache', cache_filename
 		l = None
 		if cacheable:
-			print 'load cache from', cache_filename
 			l = self.__load_object(list, cache_filename)
-			print 'l =', l
 		
 		if l != None:
 			_succ(l)
 		else:
 			try:
-				print 'try1'
 				l = lyriczilla.service.get_lyric_list(title, artist)
-				print 'before dump'
 				self.__dump_object(l, cache_filename)
-				print 'after dump'
 
 				_succ(l)
-				print 'done'
 			except:
 				_fail(1)
 				

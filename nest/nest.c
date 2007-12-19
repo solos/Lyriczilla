@@ -8,7 +8,8 @@
 #include <libmcs/mcs.h>
 #define _
 
-
+#include <sys/time.h>
+#include <time.h>
 
 static GtkWidget *lyricwin = NULL;
 GtkWidget *lyricview = NULL;
@@ -52,36 +53,55 @@ void on_lyric_list_arrive(GPtrArray *result)
 	}
 }
 
+static long long microtime()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (long long) tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
 static gboolean on_timer(gpointer data)
 {
-	GHashTable *ht = Player_GetInfo();
+	static long long last = 0;
+	long long now = microtime();
 	
-	if (ht)
+	static gint time = 0;
+	
+	if (now - last < 1000)
+		lyricview_set_current_time((LyricView *)lyricview, time + (int)(now - last));
+	else
 	{
-
-		gint time = atoi((gchar *) g_hash_table_lookup(ht, (gpointer) "time"));
-		gchar *title = (gchar *) g_hash_table_lookup(ht, (gpointer) "title");
-		gchar *artist = (gchar *) g_hash_table_lookup(ht, (gpointer) "artist");
-		gchar *uri = (gchar *) g_hash_table_lookup(ht, (gpointer) "uri");
+		last = now;
 	
-		printf("%d %s %s %s\n", time, title, artist, uri);
-			
-		if (uri && (!last_uri || strcmp(last_uri, uri))) // playing another song.
+		GHashTable *ht = Player_GetInfo();
+	
+		printf("ht = %d\n", ht);
+		if (ht)
 		{
-			g_free(last_uri);
-			last_uri = uri;
+			time = atoi((gchar *) g_hash_table_lookup(ht, (gpointer) "time"));
+			gchar *title = (gchar *) g_hash_table_lookup(ht, (gpointer) "title");
+			gchar *artist = (gchar *) g_hash_table_lookup(ht, (gpointer) "artist");
+			gchar *uri = (gchar *) g_hash_table_lookup(ht, (gpointer) "uri");
+	
+			printf("%d %s %s %s\n", time, title, artist, uri);
+			
+			if (uri && (!last_uri || strcmp(last_uri, uri))) // playing another song.
+			{
+				g_free(last_uri);
+				last_uri = uri;
 
-			lyricview_set_meta_info(LYRIC_VIEW(lyricview), uri, title, artist);
+				lyricview_set_meta_info(LYRIC_VIEW(lyricview), uri, title, artist);
 
-			lyricview_set_message(LYRIC_VIEW(lyricview), _("Searching for lyrics..."));
+				lyricview_set_message(LYRIC_VIEW(lyricview), _("Searching for lyrics..."));
 
-			// clear the old lyric
-			lyricview_clear((LyricView *)lyricview);
+				// clear the old lyric
+				lyricview_clear((LyricView *)lyricview);
 		
-			GetLyricList_async(TRUE, uri, title, artist, on_lyric_list_arrive);
-		}
+				GetLyricList_async(TRUE, uri, title, artist, on_lyric_list_arrive);
+			}
 
-		lyricview_set_current_time((LyricView *)lyricview, time);
+			lyricview_set_current_time((LyricView *)lyricview, time);
+		}
 	}
 	return TRUE;
 }
