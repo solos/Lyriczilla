@@ -65,11 +65,10 @@ on_lyricview_size_allocate               (GtkWidget       *widget,
 	int x, y;
 	x = GTK_WIDGET(lyricview->message_label)->allocation.x;
 	y = GTK_WIDGET(lyricview->message_label)->allocation.y;
-	if (lyricview->horizontal)
+	if (lyricview->style)
 		gtk_widget_set_size_request(lyricview->vbox, -1, allocation->height);
 	else
 		gtk_widget_set_size_request(lyricview->vbox, allocation->width, -1);
-	//	FIXME: we should use gtk_layout_move() instead.
 
 	gint width, height;
 	x = GTK_WIDGET(widget)->allocation.width / 2 - GTK_WIDGET(lyricview->message_label)->allocation.width / 2;
@@ -250,7 +249,7 @@ static void on_prefswin_realize(GtkWidget *widget, gpointer user_data)
 static void on_font_lyric_font_set(GtkFontButton *widget, gpointer user_data)
 {
 	extern LyricView *lyricview;
-	lyricview_set_style(lyricview, gtk_font_button_get_font_name(widget), NULL);
+	lyricview_set_style(lyricview, -1, gtk_font_button_get_font_name(widget), NULL);
 }
 
 GtkWidget *get_widget(char *widgetname)
@@ -327,7 +326,7 @@ on_lyricview_button_release_event        (GtkWidget       *widget,
 	int x = widget->allocation.height / 2;
 	int y = widget->allocation.height / 2;
 	
-	if (lyricview->horizontal)
+	if (lyricview->style)
 	{
 		while (current && current->next && x >= ((LyricItem *)current->next->data)->label->allocation.x)
 			current = current->next;
@@ -363,7 +362,7 @@ on_lyricview_motion_notify_event         (GtkWidget       *widget,
 	
 	if (lyricview->dragging)
 	{
-		if (lyricview->horizontal)
+		if (lyricview->style)
 		{
 			int newx = lyricview->left + event->x - lyricview->x;
 			int width = widget->allocation.width;
@@ -400,11 +399,8 @@ gboolean on_lyricview_scroll_event(GtkWidget *widget, GdkEventScroll *event, gpo
 
 static void lyricview_init (LyricView *ttt)
 {
-	ttt->horizontal = 0;
-	if (ttt->horizontal)
-		ttt->vbox = gtk_hbox_new(FALSE, 5);
-	else
-		ttt->vbox = gtk_vbox_new(TRUE, 5);
+	ttt->style = 0;
+	ttt->vbox = gtk_vbox_new(TRUE, 5);
 	gtk_widget_show(ttt->vbox);
 	gtk_layout_put(GTK_LAYOUT(ttt), ttt->vbox, 0, 0);
 	ttt->message_label = gtk_label_new(NULL);
@@ -550,7 +546,7 @@ void lyricview_set_current_time(LyricView *lyricview, gint time)
 	// make the current line at middle
 	if (current && !lyricview->dragging)
 	{
-		if (lyricview->horizontal)
+		if (lyricview->style)
 		{
 
 			int newx = lyricview->vbox->allocation.x - GTK_WIDGET(((LyricItem *)current->data)->label)->allocation.x;
@@ -634,8 +630,19 @@ static void lyricview_reload_style(LyricView *widget)
 	printf("done\n");
 }
 
-void lyricview_set_style(LyricView *widget, const char *font_desc, const LyricViewColors *colors)
+void lyricview_set_style(LyricView *widget, int style, const char *font_desc, const LyricViewColors *colors)
 {
+	if (style >= 0)
+	{
+		widget->style = style;
+//		g_object_unref(widget->vbox);
+		if (style)
+			widget->vbox = gtk_hbox_new(FALSE, 5);
+		else
+			widget->vbox = gtk_vbox_new(TRUE, 5);
+		gtk_layout_put(GTK_LAYOUT(widget), widget->vbox, 0, 0);
+	}
+
 	if (font_desc)
 	{
 		pango_font_description_free(widget->font);

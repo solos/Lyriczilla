@@ -118,6 +118,9 @@ static void load_settings(LyricView *lyricview, const char *profile)
 {
 	printf("about to load %s\n", profile);
 	mcs_handle_t *mcs = mcs_new("lyriczilla");
+	
+	int style = 0;
+	mcs_get_int(mcs, profile, "style", &style);
 
 	char *font_desc = "Sans 12";
 	
@@ -146,7 +149,7 @@ static void load_settings(LyricView *lyricview, const char *profile)
 	gdk_color_parse(colorstr, &colors.messages);
 	
 	mcs_destroy(mcs);
-	lyricview_set_style(lyricview, font_desc, &colors);
+	lyricview_set_style(lyricview, style, font_desc, &colors);
 }
 
 
@@ -154,6 +157,8 @@ void save_settings(LyricView *lyricview, const char *profile)
 {
 	printf("about to save %s\n", profile);
 	mcs_handle_t *mcs = mcs_new("lyriczilla");
+	
+	mcs_set_int(mcs, profile, "style", lyricview->style);
 	
 	char *font_desc = pango_font_description_to_string(lyricview->font);
 	printf("font is %s\n", font_desc);

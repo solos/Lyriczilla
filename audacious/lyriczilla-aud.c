@@ -216,7 +216,7 @@ void load_settings(LyricView *lyricview, const char *profile)
 	mcs_destroy(mcs);
 //	mcs_fini();
 
-	lyricview_set_style(lyricview, font_desc, &colors);
+	lyricview_set_style(lyricview, -1, font_desc, &colors);
 }
 
 
