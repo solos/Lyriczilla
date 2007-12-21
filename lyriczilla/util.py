@@ -6,12 +6,26 @@ from re import findall
 from string import replace, lower
 from xml.dom import minidom
 import dbus
+import threading
 
 def dbus_name_running(name):
 	try:
 		return name in dbus.SessionBus().get_object('org.freedesktop.DBus', '/').ListNames()
 	except:
 		return False
+
+def async_call(func, args, callback, exception):
+	def run(func, args, callback, exception):
+		res = None
+		try:
+			res = func(*args)
+		except Exception, e:
+			exception(e)
+		else:
+			callback(res)	
+	thread = threading.Thread(target = run, args = (func, args, callback, exception))
+	thread.start()
+	return thread
 
 def lrctolist(lrc):
 	#pattern = '\[(?P<type>.*?):(?P<value>.*?)\](?P<tail>.*)'
@@ -76,4 +90,40 @@ def lrctolist(lrc):
 						
 	arrays.sort()
 	return arrays
+
+
+
+
+def dump_object(obj, filename):
+	try:
+		os.makedirs(os.path.dirname(filename))
+	except:
+		pass
+	try:
+		cPickle.dump(obj, open(filename, 'w'))
+	except:
+		pass
+
+def load_object(objtype, filename):
+	try:
+		return objtype(cPickle.load(open(filename)))
+	except:
+		return None
+
+
+def dump_text(text, filename):
+	try:
+		os.makedirs(os.path.dirname(filename))
+	except:
+		pass
+	try:
+		open(filename, 'w').write(text.encode('utf-8'))
+	except Exception, e:
+		pass
+
+def load_text(filename):
+	try:
+		return open(filename).read()
+	except:
+		return None
 

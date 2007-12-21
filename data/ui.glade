@@ -46,10 +46,10 @@
     </child>
   </widget>
   <widget class="GtkWindow" id="searchwin">
+    <property name="width_request">497</property>
+    <property name="height_request">386</property>
     <property name="title" translatable="yes">Search for Lyrics</property>
-    <property name="window_position">GTK_WIN_POS_CENTER_ON_PARENT</property>
     <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
-    <signal name="delete_event" handler="gtk_widget_hide_on_delete"/>
     <child>
       <widget class="GtkVBox" id="vbox1">
         <property name="visible">True</property>
@@ -273,9 +273,7 @@
     <property name="title" translatable="yes">Preferences</property>
     <property name="resizable">False</property>
     <property name="type_hint">GDK_WINDOW_TYPE_HINT_DIALOG</property>
-    <property name="deletable">False</property>
     <signal name="realize" handler="on_prefswin_realize"/>
-    <signal name="delete_event" handler="gtk_widget_hide_on_delete"/>
     <child>
       <widget class="GtkVBox" id="vbox2">
         <property name="visible">True</property>

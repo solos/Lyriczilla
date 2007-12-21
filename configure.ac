@@ -51,5 +51,6 @@ AC_CONFIG_FILES([Makefile
                  lyriczilla/Makefile
                  audacious/Makefile
                  gnomeapplet/Makefile
+                 player/Makefile
                  nest/Makefile])
 AC_OUTPUT

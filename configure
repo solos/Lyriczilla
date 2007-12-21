@@ -4837,7 +4837,7 @@ fi
 
 # Checks for library functions.
 
-ac_config_files="$ac_config_files Makefile data/Makefile lyriczilla/Makefile audacious/Makefile gnomeapplet/Makefile nest/Makefile"
+ac_config_files="$ac_config_files Makefile data/Makefile lyriczilla/Makefile audacious/Makefile gnomeapplet/Makefile player/Makefile nest/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5423,6 +5423,7 @@ do
     "lyriczilla/Makefile") CONFIG_FILES="$CONFIG_FILES lyriczilla/Makefile" ;;
     "audacious/Makefile") CONFIG_FILES="$CONFIG_FILES audacious/Makefile" ;;
     "gnomeapplet/Makefile") CONFIG_FILES="$CONFIG_FILES gnomeapplet/Makefile" ;;
+    "player/Makefile") CONFIG_FILES="$CONFIG_FILES player/Makefile" ;;
     "nest/Makefile") CONFIG_FILES="$CONFIG_FILES nest/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5

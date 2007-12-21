@@ -8,13 +8,14 @@ players = []
 def register(name, func):
 	players.append((name, func))
 
+__scanned = False
+
 def __scan():
 	del players[:]
 
 	scandirs = ['/home/acmadmin/lz-new/lyriczilla/player']
 
 	for scandir in scandirs:
-		print scandir
 		try: names = glob.glob(os.path.join(scandir, "[!_]*.py"))
 		except OSError: continue
 
@@ -34,10 +35,12 @@ def __scan():
 		                        except KeyError: pass
 			finally:
 		            del sys.path[0:1]
-		 
+	__scanned = True
 	return players
 
 def get_info():
+	if not __scanned:
+		__scan()
 	for player in players:
 		info = player[1]()
 		if info != None:
