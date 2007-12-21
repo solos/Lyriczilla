@@ -13,7 +13,7 @@ __scanned = False
 def __scan():
 	del players[:]
 
-	scandirs = ['/home/acmadmin/lz-new/lyriczilla/player']
+	scandirs = ['/usr/share/lyriczilla/player']
 
 	for scandir in scandirs:
 		try: names = glob.glob(os.path.join(scandir, "[!_]*.py"))

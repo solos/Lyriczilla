@@ -1,0 +1,420 @@
+#!/usr/bin/env python
+
+import time
+import gobject
+import gtk
+import gtk.gdk
+import gtk.glade
+import pango
+import threading
+import lyriczilla.service
+import lyriczilla.player
+import lyriczilla.util
+
+class LyricItem:
+	time = 0
+	text = ''
+	label = None
+	next = prev = None
+	
+class LyricColors:
+	background = normal = current = messages = gtk.gdk.Color()
+
+class LyricView(gtk.Layout):
+	message_label = gtk.Label()
+	current = None
+	ones = []
+	vbox = None
+	def on_lyricview_size_allocate(self, widget, allocation):
+		self.vbox.set_size_request(allocation.width, -1)
+
+		x = widget.allocation.width / 2 - self.message_label.allocation.width / 2
+		y = widget.allocation.height / 2 - self.message_label.allocation.height / 2
+	
+		self.message_label.allocation.x = x
+		self.message_label.allocation.y = y
+		
+	def on_menu_search_activate(self, menuitem):
+		self.searchwin.show()
+
+	def on_menu_prefs_activate(self, menuitem):
+		self.prefswin.show()
+		
+	def on_lyricview_button_press_event(self, widget, event):
+		if event.type == gtk.gdk.BUTTON_PRESS:
+			if event.button == 1: #left
+				self.top = self.vbox.allocation.y
+			
+				self.x = event.x
+				self.y = event.y
+				self.dragging = True
+			else:
+				self.menu.popup(None, None, None, 0, gtk.get_current_event_time())
+		return True
+
+	def on_lyricview_button_release_event(self, widget, event):
+		self.dragging = False
+		
+		lis = self.ones
+		
+		previous = current = self.current
+		if current == None:
+			current = lis
+			
+		x = widget.allocation.height / 2
+		y = widget.allocation.height / 2
+		
+		if self.lyric_style == 1:
+			pass
+		else:
+			for item in ones:
+				if item.label.allocation.x < x:
+					current = item
+			if previous != current:
+				time = current.time
+				# notify time change
+				
+
+	def on_lyricview_motion_notify_event(self, widget, event):
+		if self.dragging:
+			newy = self.top + event.y - self.y
+			height = widget.allocation.height
+			# TODO: round to seconds if nessessary.
+			widget.move(self.vbox, 0, newy)
+			
+	def on_lyricview_scroll_event(self, widget, event):
+		if event.direction in (gtk.gdk.SCROLL_UP, gtk.gdk.SCROLL_LEFT):
+			self.overall_adjust_by(300)
+		else:
+			self.overall_adjust_by(-300)
+		
+	def treeview_lyric_add_header(self):
+		treeview_lyric = self.xml.get_widget('treeview_lyric')
+		cell = gtk.CellRendererText()
+		column = gtk.TreeViewColumn()
+		
+		column.set_title('Title')
+		column.pack_start(cell, True)
+		column.set_attributes(cell, text = 0)
+		treeview_lyric.append_column(column)
+		
+		cell = gtk.CellRendererText()
+		column = gtk.TreeViewColumn()
+		column.set_title('Artist')
+		column.pack_start(cell, True)
+		column.set_attributes(cell, text = 1)
+		treeview_lyric.append_column(column)
+
+
+	def __number_between(self, fr, to, rate):
+		'''Calculate the number between the two numbers.'''
+		return fr + rate * (to - fr)
+		
+	def __color_between(self, fr, to, rate):
+		'''Calculate the color between the two colors.'''
+		#clr.pixel = self.__number_between(fr.pixel, to.pixel, rate)
+		r = self.__number_between(fr.red, to.red, rate)
+		g = self.__number_between(fr.green, to.green, rate)
+		b = self.__number_between(fr.blue, to.blue, rate)
+		print r, g, b
+		return gtk.gdk.Color(r, g, b)
+		
+	def append_text(self, time, text):
+		'''Append a single line of lyric.'''
+		item = LyricItem()
+		item.time = time
+		item.text = text
+		item.label = gtk.Label(text)
+		
+		item.label.modify_font(self.font)
+		item.label.modify_fg(gtk.STATE_NORMAL, self.colors.normal)
+		
+		item.label.show()
+		self.vbox.pack_start(item.label, False, False, 0)
+		
+		if len(self.ones) > 0:
+			item.prev = self.ones[-1]
+			self.ones[-1].next = item
+		
+		self.ones.append(item)
+		
+		self.message_label.hide()
+		self.vbox.show()
+		
+	def set_message(self, message):
+		self.vbox.hide()
+		self.message_label.set_text(message)
+		self.message_label.show()
+		self.queue_draw()
+
+	def set_current_time(self, time):
+		the_y = self.allocation.height / 2
+		
+		hl = None
+	
+		thre = 500.0
+		consider = set()
+		try:
+			next = None
+			it = iter(self.ones)
+			while True:
+				cur, next = next, it.next()
+				if cur != None:
+					print cur.time, time, next.time
+				if (cur != None and (time + thre > cur.time and time - thre < next.time)):
+					consider.add(cur)
+					#consider.add(next)
+				if (cur != None and time >= cur.time and time < next.time):
+					hl = cur
+
+		except StopIteration, e:
+			pass
+		
+		
+		def calc_color(start, end, value):
+			if value < start - thre or value >= end + thre:
+				return 0
+			if value < start + thre:
+				return (time - start + thre) / thre / 2
+			if value < end - thre:
+				return 1
+			if time < end + thre:
+				return (end - time + thre) / thre / 2
+				
+		
+		print '==============='
+		for item in consider:
+			if item.next:
+				d = calc_color(item.time, item.next.time, time)
+				color = self.__color_between(gtk.gdk.color_parse('blue'), gtk.gdk.color_parse('white'), d)
+				item.label.modify_fg(gtk.STATE_NORMAL, color)
+			
+		
+			
+		
+		
+		if hl != None and not self.dragging:
+			newy = self.vbox.allocation.y - hl.label.allocation.y
+			newy += self.allocation.height / 2
+			#newy -= hl.label.allocation.height / 2
+			
+			if hl.next != None:
+				height = hl.next.label.allocation.y - hl.label.allocation.y
+				delta = hl.next.time - hl.time
+				if delta > 0:
+					newy -= height * (time - hl.time) / delta
+			self.move(self.vbox, 0, newy)
+			
+				
+		
+
+	def on_search_lyric_list_arrive(self, result):
+		print 'arrive'
+		print self.xml
+		treeview_lyric = self.xml.get_widget('treeview_lyric')
+		print treeview_lyric
+		if result != None:
+			store = gtk.ListStore(*[gobject.TYPE_STRING] * 3)
+			
+			for row in result:
+				title = row['title']
+				artist = row['artist']
+				url = row['url']
+
+				store.append(row=(title, artist, url))
+				#store.set(it, 0, title, 1, artist, 2, url);
+				
+			treeview_lyric.set_model(store)
+			
+			#self.label_status.set_text('')
+		else:
+			#self.label_status.set_text('No results.')
+			pass
+
+	def on_button_find_clicked(self, button):
+		entry_title = self.xml.get_widget('entry_title')
+		entry_artist = self.xml.get_widget('entry_artist')
+		#label_status.set_text('Searching...')
+		
+		title = entry_title.get_text()
+		artist = entry_artist.get_text()
+		
+		self.th = lyriczilla.util.async_call(lyriczilla.service.get_lyric_list, (False, '', title, artist), self.on_search_lyric_list_arrive, None)
+
+
+	def on_search_lyric_arrive(self, result):
+		on_lyric_arrive(result)
+		label_status.set_text('')
+
+
+	def on_prefswin_realize(self, widget, user_data):
+		font_lyric.set_font_name('Monospace 14')
+		
+	def on_font_lyric_font_set(self, widget, user_data):
+		set_lyric_style(widget, -1, widget, None)
+		
+		
+	def __load_glade_file(self):
+		xml = gtk.glade.XML('/usr/share/lyriczilla/ui.glade')
+		xml.signal_autoconnect(self)
+		self.menu = xml.get_widget('lyricview_menu')
+		self.prefswin = xml.get_widget('prefswin')
+		self.searchwin = xml.get_widget('searchwin')
+		self.xml = xml
+		
+	def __set_hide_on_delete(self, widget):
+		widget.connect('delete_event', widget.hide_on_delete)
+		
+	def init(self):
+		'''Initialize the control.'''
+		self.lyric_style = 0
+		self.vbox = gtk.VBox(True, 5)
+		self.vbox.show()
+		self.put(self.vbox, 0, 0)
+		self.colors = LyricColors()
+		
+		self.colors.normal = gtk.gdk.color_parse('blue')
+		
+		#self.message_label = gtk.Label()
+		color = gtk.gdk.color_parse('red')
+		self.message_label.modify_fg(gtk.STATE_NORMAL, color)
+		self.put(self.message_label, 0, 0)
+		self.font = pango.FontDescription('Sans 12')
+		self.message_label.modify_font(self.font)
+		self.dragging = False
+		self.set_message('LyricZilla')
+		
+		self.set_events(gtk.gdk.BUTTON1_MOTION_MASK | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+	
+		self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse('black'));
+
+		self.connect('size_allocate', self.on_lyricview_size_allocate)
+		self.connect('button_press_event', self.on_lyricview_button_press_event)
+		self.connect('motion_notify_event', self.on_lyricview_motion_notify_event)
+		self.connect('button_release_event', self.on_lyricview_button_release_event)
+		self.connect('scroll_event', self.on_lyricview_scroll_event)
+		self.__load_glade_file()
+		
+		self.treeview_lyric_add_header()
+		
+		self.__set_hide_on_delete(self.xml.get_widget('searchwin'))
+		self.__set_hide_on_delete(self.xml.get_widget('prefswin'))
+		
+		#self.async = lyriczilla.util.async_call(lyriczilla.service.get_lyric_list, ('Someone', ''), self.on_search_lyric_list_arrive, None)
+
+	def clear(self):
+		'''Clear existing lyrics.'''
+		print 'clear'
+		for item in self.ones:
+			item.label.destroy()
+		del self.ones[:]
+		self.vbox.hide()
+		self.message_label.show()
+		self.move(self.vbox, 1000000000, 0)
+		
+	def overall_adjust_by(self, delta):
+		'''Adjust each lyric by delta milliseconds.'''
+		for item in self.ones:
+			item.time += delta
+			
+	def __reload_lyric_style(self):
+		for item in self.ones:
+			item.label.modify_font(self.font)
+			
+	def set_lyric_style(self, font_desc, colors):
+		if font_desc != None:
+			self.font = pango.FontDescription(font_desc)
+		if colors != None:
+			self.colors = colors
+		__reload_lyric_style(widget);	
+
+	def set_meta_info(self, uri, title, artist):
+		self.uri = uri
+		self.title = title
+		self.artist = artist
+
+
+if 0:
+	gtk.gdk.threads_init()
+	x=gtk.Window(gtk.WINDOW_TOPLEVEL)
+	a = LyricView()
+	x.add(a)
+	a.init()
+	a.show()
+	x.show()
+	x.connect_object('destroy', gtk.main_quit, x)
+	a.append_text(3, 'good')
+	a.append_text(3000, 'good2')
+	a.append_text(6000, 'good3')
+	gtk.gdk.threads_enter()
+	gtk.main()
+	gtk.gdk.threads_leave()
+
+
+global lyricwin, lyricview
+lyricwin = None
+lyricview = None
+
+
+def lyric_arrive(ans):
+	lyricview.clear()
+	for line in ans:
+		(time, text) = line
+		lyricview.append_text(time, text)
+
+
+def exception(e):
+	print e
+
+
+def arrive(ans):
+	if len(ans) > 0:
+		url = ans[0]['url']
+		lyriczilla.util.async_call(lyriczilla.service.get_lyric, (True, url), lyric_arrive, exception)
+
+def __auto_search_lyrics(uri, title, artist):
+	async = lyriczilla.util.async_call(lyriczilla.service.get_lyric_list, (True, uri, title, artist), arrive, exception)
+	pass
+
+global last_info
+last_info = None
+last_clock = -1
+
+def on_timer():
+	global last_info
+	if last_info != None:
+		global last_clock
+		#print 'set time to', last_info['time'] + (time.time() - last_clock) * 1000
+		lyricview.set_current_time(last_info['time'] + (time.time() - last_clock) * 1000)
+		
+	
+	info = lyriczilla.player.get_info()
+	
+	if info != None:
+		if last_info == None or info['uri'] != last_info['uri']:
+			print 'diff!!'
+			global lyricwin, lyricview
+			lyricview.set_message('Searching for lyrics...')
+			__auto_search_lyrics(info['uri'], info['title'], info['artist'])
+			last_clock = time.time()
+		elif info['time'] != last_info['time']:
+			print 'time change'
+			last_clock = time.time()
+		last_info = info
+	return True
+	
+
+if True:
+	gtk.gdk.threads_init()
+	lyricwin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+	lyricview = LyricView()
+	lyricview.init()
+	lyricview.show()
+	lyricwin.add(lyricview)
+	lyricwin.show()
+	lyricwin.connect('destroy', gtk.main_quit)
+	gobject.timeout_add(80, on_timer)
+	gtk.gdk.threads_enter()
+	gtk.main()
+	gtk.gdk.threads_leave()
+	
