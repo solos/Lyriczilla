@@ -77,7 +77,7 @@ def get_lyric_list(cacheable, uri, title, artist):
 	l = None
 	if cacheable:
 		l = lyriczilla.util.load_object(list, cache_filename)
-	
+	print 'l =', l
 	if l != None:
 		return l
 	else:

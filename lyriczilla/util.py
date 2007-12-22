@@ -7,6 +7,7 @@ from string import replace, lower
 from xml.dom import minidom
 import dbus
 import threading
+import cPickle
 
 def dbus_name_running(name):
 	try:

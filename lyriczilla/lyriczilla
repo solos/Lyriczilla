@@ -116,7 +116,6 @@ class LyricView(gtk.Layout):
 		r = self.__number_between(fr.red, to.red, rate)
 		g = self.__number_between(fr.green, to.green, rate)
 		b = self.__number_between(fr.blue, to.blue, rate)
-		print r, g, b
 		return gtk.gdk.Color(r, g, b)
 		
 	def append_text(self, time, text):
@@ -154,13 +153,12 @@ class LyricView(gtk.Layout):
 	
 		thre = 500.0
 		consider = set()
+		
 		try:
 			next = None
 			it = iter(self.ones)
 			while True:
 				cur, next = next, it.next()
-				if cur != None:
-					print cur.time, time, next.time
 				if (cur != None and (time + thre > cur.time and time - thre < next.time)):
 					consider.add(cur)
 					#consider.add(next)
@@ -182,7 +180,6 @@ class LyricView(gtk.Layout):
 				return (end - time + thre) / thre / 2
 				
 		
-		print '==============='
 		for item in consider:
 			if item.next:
 				d = calc_color(item.time, item.next.time, time)
@@ -332,23 +329,6 @@ class LyricView(gtk.Layout):
 		self.uri = uri
 		self.title = title
 		self.artist = artist
-
-
-if 0:
-	gtk.gdk.threads_init()
-	x=gtk.Window(gtk.WINDOW_TOPLEVEL)
-	a = LyricView()
-	x.add(a)
-	a.init()
-	a.show()
-	x.show()
-	x.connect_object('destroy', gtk.main_quit, x)
-	a.append_text(3, 'good')
-	a.append_text(3000, 'good2')
-	a.append_text(6000, 'good3')
-	gtk.gdk.threads_enter()
-	gtk.main()
-	gtk.gdk.threads_leave()
 
 
 global lyricwin, lyricview
