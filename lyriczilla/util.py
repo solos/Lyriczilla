@@ -1,6 +1,7 @@
 # I will rewrite this file soon.
 
 from sys import stdin
+import os
 import re
 from re import findall
 from string import replace, lower
@@ -93,7 +94,11 @@ def lrctolist(lrc):
 	return arrays
 
 
-
+def makedirs_for_file(filename):
+	try:
+		os.makedirs(os.path.dirname(filename))
+	except Exception, e:
+		print e
 
 def dump_object(obj, filename):
 	try:
