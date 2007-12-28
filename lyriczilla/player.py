@@ -5,8 +5,8 @@ import imp
 
 players = []
 
-def register(name, func):
-	players.append((name, func))
+def register(name, func_get_info, func_seek = None):
+	players.append((name, func_get_info, func_seek))
 
 __scanned = False
 
@@ -46,4 +46,10 @@ def get_info():
 		if info != None:
 			return info
 	return None
+
+def seek(time):
+	for player in players:
+		info = player[1]()
+		if info != None:
+			player[2](time)
 

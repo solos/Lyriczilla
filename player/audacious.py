@@ -12,5 +12,12 @@ def audacious_get_info():
 	except:
 		return None
 	
-lyriczilla.player.register('Audacious', audacious_get_info)
+def audacious_seek(time):
+	try:
+		player = dbus.SessionBus().get_object('org.atheme.audacious', '/Player')
+		player.PositionSet(time)
+	except:
+		pass
+	
+lyriczilla.player.register('Audacious', audacious_get_info, audacious_seek)
 
