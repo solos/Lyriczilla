@@ -35,6 +35,7 @@ class LyricView(gtk.Layout):
 		self.message_label.modify_fg(gtk.STATE_NORMAL, self.prefs.colors['message'])
 		self.put(self.message_label, 0, 0)
 		self.dragging = False
+		self.dragged = False
 		self.set_message('LyricZilla')
 		
 		self.set_events(gtk.gdk.BUTTON1_MOTION_MASK | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
@@ -96,30 +97,36 @@ class LyricView(gtk.Layout):
 	def on_lyricview_button_release_event(self, widget, event):
 		self.dragging = False
 		
-		lis = self.ones
+		if self.dragged:
 		
-		previous = current = self.current
-		if current == None:
-			current = lis
-			
-		x = widget.allocation.height / 2
-		y = widget.allocation.height / 2
+			lis = self.ones
 		
-		print 'x is', x
-		for item in self.ones:
-			print item.label.allocation.y
-			if item.label.allocation.y < y:
-				current = item
-		if previous != current:
-			time = current.time
-			print 'new time is', time
+			previous = current = self.current
+			if current == None:
+				current = lis
 			
-			on_seek(time)
-			# notify time change
-				
+			x = widget.allocation.height / 2
+			y = widget.allocation.height / 2
+		
+			print 'x is', x
+			for item in self.ones:
+				print item.label.allocation.y
+				if item.label.allocation.y < y:
+					current = item
+			if previous != current:
+				time = current.time
+				print 'new time is', time
+			
+				try:
+					on_seek(time)
+				except:
+					pass
+				# notify time change
+			self.dragged = False
 
 	def on_lyricview_motion_notify_event(self, widget, event):
 		if self.dragging:
+			self.dragged = True
 			newy = self.top + event.y - self.y
 			height = widget.allocation.height
 			# TODO: round to seconds if nessessary.
@@ -238,11 +245,7 @@ class LyricView(gtk.Layout):
 				color = self.__color_between(self.prefs.colors['normal'], self.prefs.colors['current'], d)
 				item.label.modify_fg(gtk.STATE_NORMAL, color)
 			
-		
-			
-		
-		
-		if hl != None and not self.dragging:
+		if hl != None and not self.dragged:
 			newy = self.vbox.allocation.y - hl.label.allocation.y
 			newy += self.allocation.height / 2
 			#newy -= hl.label.allocation.height / 2
