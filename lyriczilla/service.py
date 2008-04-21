@@ -61,7 +61,8 @@ def __get_lyric_list(title, artist):
 	
 
 def __get_lyric_source(url):
-	return urllib2.urlopen(urllib2.quote(url.encode('gbk'), ':/')).read().decode('gbk')
+	return urllib2.urlopen(url).read().decode('gbk')
+	#return urllib2.urlopen(urllib2.quote(url.encode('gbk'), ':/')).read().decode('gbk')
 	
 
 
@@ -97,8 +98,8 @@ def get_lyric(cacheable, url):
 		try:
 			lrc_text = __get_lyric_source(url)
 			lyriczilla.util.dump_text(lrc_text, cache_filename)
-		except:
-			pass
+		except Exception, e:
+			print e
 			
 	if lrc_text != None:
 		return lyriczilla.util.lrctolist(lrc_text)
