@@ -1,66 +1,74 @@
 #!/usr/bin/python
 
-import sys
 import urllib2
-import gettext
 from optparse import OptionParser
 from xml.dom import minidom
 from base64 import b64encode, b64decode
 from lrc2xml import lrc2xml
 
+
 def detect_charset(s):
-	charsets = ('iso-8859-1', 'gbk', 'utf-8')
-	for charset in charsets:
-		try:
-			return unicode(unicode(s, 'utf-8').encode(charset), 'gbk')
-		except:
-			continue
-	return s
+    charsets = ('iso-8859-1', 'gbk', 'utf-8')
+    for charset in charsets:
+        try:
+            return unicode(unicode(s, 'utf-8').encode(charset), 'gbk')
+        except:
+            continue
+    return s
 
 if __name__ == "__main__":
-	
-	usage = "Usage: lyriczilla -t TITLE [-a ARTIST]"
-	parser = OptionParser(usage=usage)
 
-	parser.add_option("-t", "--title", dest="title", default="*", help="the title of the song")
-	parser.add_option("-a", "--artist", dest="artist", default="*", help="the artist of the song")
-	parser.add_option("-l", "--local", dest="local", default="", help="read local LRC file")
-	(options, args) = parser.parse_args()
+    usage = "Usage: lyriczilla -t TITLE [-a ARTIST]"
+    parser = OptionParser(usage=usage)
 
-	if len(args) == 0 and options.title != '*':
-		title_encode = urllib2.quote(detect_charset(options.title).encode('gbk').replace(' ', ''))
-		artist_encode = urllib2.quote(detect_charset(options.artist).encode('gbk').replace(' ',''))
-		url = 'http://www.winampcn.com/lyrictransfer/get.aspx?song=%s&artist=%s&lsong=%s&Datetime=20060601' % (title_encode, artist_encode, title_encode)
-	
-		xmltext = urllib2.urlopen(url).read()
-		try:
-			xmltext = xmltext.decode('gbk').encode('UTF-8')
-			xmltext = xmltext.replace('encoding="gb2312"', 'encoding="UTF-8"')
-		except:
-			pass
+    parser.add_option("-t", "--title", dest="title", default="*",
+                      help="the title of the song")
+    parser.add_option("-a", "--artist", dest="artist", default="*",
+                      help="the artist of the song")
+    parser.add_option("-l", "--local", dest="local", default="",
+                      help="read local LRC file")
+    (options, args) = parser.parse_args()
 
-		xmldoc = minidom.parseString(xmltext)
+    if len(args) == 0 and options.title != '*':
+        title = detect_charset(options.title).encode('gbk').replace(' ', '')
+        title_encode = urllib2.quote(title)
+        artist = detect_charset(options.artist).encode('gbk').replace(' ', '')
+        artist_encode = urllib2.quote(artist)
+        base_url = 'http://www.winampcn.com/lyrictransfer/get.aspx?'
+        parameters = 'song=%s&artist=%s&lsong=%s&Datetime=20060601' % \
+                     (title_encode, artist_encode, title_encode)
+        url = '%s%s' % (base_url, parameters)
 
-		dom = minidom.getDOMImplementation().createDocument(None, 'lyrics', None)
+        xmltext = urllib2.urlopen(url).read()
+        try:
+            xmltext = xmltext.decode('gbk').encode('UTF-8')
+            xmltext = xmltext.replace('encoding="gb2312"', 'encoding="UTF-8"')
+        except:
+            pass
 
-		root = xmldoc.documentElement
-		for node in root.getElementsByTagName('LyricUrl'):
-			for node in node.childNodes:
-				xx = dom.createElement('lyric')
-				xx.setAttribute('id', b64encode(node.data.encode('gbk')))
-				xx.setAttribute('title', 'title')
-				xx.setAttribute('artist', 'artist')
-				dom.documentElement.appendChild(xx)
-		print dom.toprettyxml()
-	elif len(args) == 1:
-		url = b64decode(args[0])
-		url = urllib2.quote(url, ':/')
-#		print unicode(urllib2.urlopen(url).read(), 'gbk')
-		print lrc2xml(unicode(urllib2.urlopen(url).read(), 'gbk')).encode('utf-8')
-	elif options.local != '':
-		f = open(options.local, 'r')
-		s = unicode(f.read(), 'gbk')
-		print lrc2xml(s).encode('utf-8')
-	else:
-		print 'usage'
+        xmldoc = minidom.parseString(xmltext)
 
+        dom = minidom.getDOMImplementation().createDocument(None,
+                                                            'lyrics', None)
+
+        root = xmldoc.documentElement
+        for node in root.getElementsByTagName('LyricUrl'):
+            for node in node.childNodes:
+                xx = dom.createElement('lyric')
+                xx.setAttribute('id', b64encode(node.data.encode('gbk')))
+                xx.setAttribute('title', 'title')
+                xx.setAttribute('artist', 'artist')
+                dom.documentElement.appendChild(xx)
+        print dom.toprettyxml()
+    elif len(args) == 1:
+        url = b64decode(args[0])
+        url = urllib2.quote(url, ':/')
+#       print unicode(urllib2.urlopen(url).read(), 'gbk')
+        content = unicode(urllib2.urlopen(url).read(), 'gbk')
+        print lrc2xml(content).encode('utf-8')
+    elif options.local != '':
+        f = open(options.local, 'r')
+        s = unicode(f.read(), 'gbk')
+        print lrc2xml(s).encode('utf-8')
+    else:
+        print 'usage'
